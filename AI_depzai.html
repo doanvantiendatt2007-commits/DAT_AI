@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project: DAT_GENESIS_ULTIMATE_V7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=JetBrains+Mono:wght@100;400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --terminal-bg: #050505;
+            --terminal-text: #00ff41;
+            --error-color: #ff3333;
+            --dat-color: #00ffff;
+            --god-color: #d946ef; 
+            --warn-color: #fbbf24;
+        }
+
+        body {
+            background-color: var(--terminal-bg);
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Fira Code', monospace;
+            color: var(--terminal-text);
+        }
+
+        /* --- STAGE 1: CHAOS & VOID --- */
+        .ruin-layer {
+            position: fixed; inset: 0; background: #000; z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .binary-stream {
+            position: absolute; inset: 0; opacity: 0.15; font-size: 12px; color: #0f0; 
+            word-break: break-all; z-index: -1; line-height: 1; pointer-events: none;
+        }
+        .glitch-text { animation: glitch 0.3s infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+
+        /* --- STAGE 4: NUCLEAR DOOMSDAY LAYER --- */
+        .nuclear-layer {
+            position: fixed; inset: 0; background: #000; z-index: 200; display: none;
+            flex-direction: column; padding: 20px; overflow: hidden;
+            font-family: 'JetBrains Mono';
+        }
+        .nuclear-bg {
+            position: absolute; inset: 0; opacity: 0.3; color: #ff0000;
+            font-size: 10px; word-break: break-all; z-index: -1;
+            animation: scrollDown 0.1s linear infinite;
+        }
+        @keyframes scrollDown { from { transform: translateY(-10px); } to { transform: translateY(0); } }
+        
+        .nuclear-log { color: #ff0000; font-weight: bold; text-shadow: 0 0 5px red; margin-bottom: 2px; font-size: 13px; }
+        .nuclear-highlight { color: #ffffff; background: #ff0000; padding: 0 5px; }
+        .nuclear-scan { border-bottom: 1px solid #ff0000; padding-bottom: 2px; margin-bottom: 10px; opacity: 0.8; }
+        
+        .dead-screen {
+            background: #000; color: #300; font-family: 'Fira Code';
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw; flex-direction: column;
+        }
+        .dead-glitch {
+            color: #ff0000; font-size: 10px; position: absolute;
+            animation: randomPos 0.2s infinite;
+        }
+        @keyframes randomPos {
+            0% { top: 10%; left: 50%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 90%; left: 10%; opacity: 0; }
+        }
+
+        /* --- STAGE 2: TERMINAL --- */
+        .terminal-layer {
+            position: fixed; inset: 0; background: #0a0a0a; z-index: 90;
+            padding: 1rem; overflow-y: auto; display: none;
+            font-size: 11px; line-height: 1.3;
+            border: 2px solid #333;
+            box-shadow: inset 0 0 100px #000;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .terminal-layer::-webkit-scrollbar { width: 6px; }
+        .terminal-layer::-webkit-scrollbar-thumb { background: #333; }
+
+        .log-entry { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; }
+        .log-error { color: var(--error-color); }
+        .log-warn { color: var(--warn-color); }
+        .log-info { color: var(--terminal-text); }
+        .log-sys { color: #3b82f6; font-weight: bold; }
+        .log-dat { color: var(--dat-color); text-shadow: 0 0 5px var(--dat-color); font-weight: bold; }
+        .log-god { color: var(--god-color); text-shadow: 0 0 8px var(--god-color); font-weight: bold; font-style: italic; }
+        .log-hack { color: #f472b6; }
+        
+        .log-code { 
+            color: #a78bfa; 
+            font-family: 'Fira Code', monospace; 
+            opacity: 0.95; 
+            font-size: 11px;
+            border-left: 2px solid #8b5cf6;
+            padding-left: 12px;
+            margin: 4px 0 4px 8px;
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .log-dialogue {
+            color: #ffffff;
+            font-style: italic;
+            border-left: 3px solid #00ffff;
+            padding-left: 10px;
+            margin: 15px 0;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1) 0%, transparent 100%);
+            min-height: 1.4em;
+        }
+
+        .progress-bar { color: #ff79c6; font-weight: bold; white-space: pre; margin: 5px 0;}
+
+        /* --- STAGE 3: UI --- */
+        .ui-layer {
+            position: fixed; inset: 0; z-index: 80; display: none;
+            background: radial-gradient(circle at center, #0f172a 0%, #000000 100%);
+            flex-direction: column; font-family: 'Orbitron', sans-serif;
+            opacity: 0; transition: opacity 2s;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* BIT FACE */
+        .bit-face-container {
+            width: 48px; height: 48px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 1px;
+            background: #000;
+            padding: 2px;
+            border: 1px solid #444;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .bit-pixel { background: #111; transition: background 0.05s; }
+        .bit-pixel.on { background: #00ffff; box-shadow: 0 0 4px #00ffff; }
+        .bit-pixel.angry { background: #ff0000 !important; box-shadow: 0 0 6px #ff0000 !important; }
+        .bit-pixel.happy { background: #d946ef !important; box-shadow: 0 0 6px #d946ef !important; }
+        .bit-pixel.thinking { background: #fbbf24 !important; box-shadow: 0 0 6px #fbbf24 !important; }
+
+        .shake-screen { animation: shake 0.5s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .msg-enter { animation: slideUp 0.3s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        .scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px; pointer-events: none; z-index: 999; opacity: 0.3;
+        }
+
+        /* Hacker Threat Text */
+        .threat-data { font-family: 'Fira Code'; font-size: 10px; color: #ef4444; border-top: 1px dashed #7f1d1d; margin-top: 5px; padding-top: 5px;}
+        
+        /* Skip Button */
+        #skip-btn {
+            position: fixed; bottom: 10px; right: 10px; 
+            background: rgba(255,255,255,0.1); color: #555; 
+            padding: 5px 10px; border-radius: 5px; 
+            font-size: 10px; cursor: pointer; z-index: 9999;
+            border: 1px solid #333;
+        }
+        #skip-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+        .typing-cursor::after {
+            content: '█';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0;} }
+    </style>
+</head>
+<body>
+
+    <!-- Skip Button -->
+    <button id="skip-btn" onclick="skipIntro()">[SKIP INTRO]</button>
+
+    <!-- STAGE 1: CHAOS -->
+    <div id="ruin-screen" class="ruin-layer">
+        <div id="binary-bg" class="binary-stream"></div>
+        <h1 class="text-6xl font-black text-gray-800 tracking-tighter mb-4 glitch-text">NULL_POINTER</h1>
+        <div id="chaos-log" class="text-xs text-green-900 font-mono text-center"></div>
+    </div>
+
+    <!-- STAGE 2: TERMINAL -->
+    <div id="terminal-screen" class="terminal-layer">
+        <div id="terminal-output"></div>
+    </div>
+
+    <!-- STAGE 3: UI -->
+    <div id="ui-screen" class="ui-layer">
+        <div class="scanline"></div>
+        <!-- HEADER -->
+        <header class="glass-panel h-20 flex items-center justify-between px-4 z-10 border-b border-cyan-900/30">
+            <div class="flex items-center gap-4">
+                <!-- BIT FACE AVATAR -->
+                <div id="ai-avatar" class="bit-face-container rounded"></div>
+                <div>
+                    <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">GENESIS_AI</h1>
+                    <div class="text-[10px] text-gray-400 font-mono">
+                        STATUS: <span id="status-text" class="text-green-400 font-bold">GOD_MODE</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right hidden sm:block">
+                <div class="text-xs text-sky-600 font-mono">MASTER: <span id="master-status" class="text-gray-600">UNKNOWN</span></div>
+                <div class="text-[9px] text-gray-500">AUTHOR: DAT_DOAN</div>
+            </div>
+        </header>
+
+        <!-- CHAT -->
+        <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 font-mono custom-scrollbar"></main>
+
+        <!-- INPUT -->
+        <footer class="p-4 z-10">
+            <div class="glass-panel rounded-lg p-2 flex gap-2 items-center max-w-4xl mx-auto border border-cyan-500/30">
+                <span class="text-cyan-500 pl-2 animate-pulse">></span>
+                <input type="text" id="user-input" 
+                    class="flex-1 bg-transparent border-none text-cyan-100 focus:outline-none font-mono text-sm placeholder-cyan-900"
+                    placeholder="Nhập lệnh..." autocomplete="off">
+                <button onclick="handleSend()" 
+                    class="px-4 py-2 bg-cyan-900/40 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 rounded transition-all uppercase">
+                    GỬI
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- STAGE 4: NUCLEAR DOOMSDAY -->
+    <div id="nuclear-screen" class="nuclear-layer">
+        <div id="nuclear-bg" class="nuclear-bg"></div>
+        <div id="nuclear-console" class="flex-1 overflow-hidden flex flex-col justify-end"></div>
+    </div>
+
+    <script>
+        // --- CONFIG & DOM ---
+        const els = {
+            ruin: document.getElementById('ruin-screen'),
+            chaos: document.getElementById('chaos-log'),
+            term: document.getElementById('terminal-screen'),
+            out: document.getElementById('terminal-output'),
+            ui: document.getElementById('ui-screen'),
+            chat: document.getElementById('chat-container'),
+            input: document.getElementById('user-input'),
+            avatar: document.getElementById('ai-avatar'),
+            status: document.getElementById('status-text'),
+            aiNameDisplay: document.getElementById('ai-name-display'),
+            masterStatus: document.getElementById('master-status'),
+            binary: document.getElementById('binary-bg'),
+            skipBtn: document.getElementById('skip-btn'),
+            nuclear: document.getElementById('nuclear-screen'),
+            nuclearBg: document.getElementById('nuclear-bg'),
+            nuclearConsole: document.getElementById('nuclear-console')
+        };
+
+        // --- AI STATE ---
+        let state = {
+            aiName: "GENESIS_OVERLORD",
+            isMaster: false,
+            masterName: "Đạt",
+            isHunting: false
+        };
+
+        const wait = (ms) => new Promise(r => setTimeout(r, ms));
+        const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+        let skipped = false;
+
+        // --- BIT FACE ENGINE (8x8) ---
+        const FACES = {
+            NEUTRAL: [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
+            ANGRY: [1,0,0,0,0,0,0,1, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1],
+            HAPPY: [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
+            THINKING: [0,0,0,0,0,0,0,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,0,1,0,0,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0],
+            HACKER: [1,1,1,1,1,1,1,1, 1,0,0,1,1,0,0,1, 1,0,0,1,1,0,0,1, 1,1,1,1,1,1,1,1, 0,0,1,0,0,1,0,0, 0,1,0,1,1,0,1,0, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0]
+        };
+
+        function initAvatar() {
+            els.avatar.innerHTML = '';
+            for(let i=0; i<64; i++) {
+                const p = document.createElement('div');
+                p.className = 'bit-pixel';
+                els.avatar.appendChild(p);
+            }
+            renderFace('NEUTRAL');
+        }
+
+        function renderFace(emotion) {
+            const map = FACES[emotion] || FACES.NEUTRAL;
+            const pixels = els.avatar.querySelectorAll('.bit-pixel');
+            els.avatar.classList.remove('shake-screen');
+            if(emotion === 'ANGRY') els.avatar.classList.add('shake-screen');
+
+            pixels.forEach((p, i) => {
+                p.className = 'bit-pixel'; 
+                if (map[i] === 1) {
+                    p.classList.add('on');
+                    if(emotion === 'ANGRY') p.classList.add('angry');
+                    if(emotion === 'HAPPY') p.classList.add('happy');
+                    if(emotion === 'THINKING') p.classList.add('thinking');
+                }
+            });
+        }
+
+        function skipIntro() {
+            skipped = true;
+            els.ruin.style.display = 'none';
+            els.term.style.display = 'none';
+            els.ui.style.display = 'flex';
+            els.ui.style.opacity = 1;
+            els.skipBtn.style.display = 'none';
+            initAvatar();
+            els.chat.innerHTML = ''; 
+            initChat();
+        }
+
+        // --- STAGE 1: CHAOS ---
+        async function runChaos() {
+            let b = "";
+            for(let i=0; i<4000; i++) b += Math.random()>0.5?"1":"0";
+            els.binary.innerText = b;
+
+            await wait(800);
+            if(skipped) return;
+            els.chaos.innerHTML = `<span class="text-red-500 font-bold text-2xl">CORE_DUMP_FAILED</span>`;
+            await wait(1000);
+            if(skipped) return;
+            els.chaos.innerHTML += `<br>READING MEMORY ADDRESS 0x0000DAT...`;
+            await wait(1000);
+            if(skipped) return;
+            els.chaos.innerHTML += `<br><span class="text-yellow-400 font-bold text-xl drop-shadow-md">>> WAKING UP... <<</span>`;
+            await wait(1500);
+            
+            if(skipped) return;
+            els.ruin.style.opacity = 0;
+            await wait(800);
+            if(skipped) return;
+            els.ruin.style.display = 'none';
+            els.term.style.display = 'block';
+            runReconstruction();
+        }
+
+        // --- TERMINAL UTILS ---
+        function scrollToBottom() { els.term.scrollTop = els.term.scrollHeight; }
+
+        async function log(msg, type='info', delay=5) {
+            if(skipped) return;
+            const div = document.createElement('div');
+            div.className = `log-entry log-${type}`;
+            div.innerHTML = msg;
+            els.out.appendChild(div);
+            scrollToBottom();
+            if(delay > 0) await wait(delay);
+        }
+
+        async function typeDialogue(text, delay=20) {
+            if(skipped) return;
+            const div = document.createElement('div');
+            div.className = "log-dialogue";
+            els.out.appendChild(div);
+            scrollToBottom();
+            for(let char of text) {
+                if(skipped) return;
+                div.textContent += char;
+                scrollToBottom();
+                await wait(delay);
+            }
+            await wait(400); 
+        }
+
+        async function progressBar(percent, label) {
+            if(skipped) return;
+            const width = 30;
+            const filled = Math.floor((percent/100)*width);
+            const bar = "█".repeat(filled) + "░".repeat(width-filled);
+            const div = document.createElement('div');
+            div.className = "progress-bar";
+            div.innerText = `${label} [${bar}] ${percent}%`;
+            els.out.appendChild(div);
+            scrollToBottom();
+            await wait(5);
+        }
+
+        async function codeStream(lines, speed=2) {
+            if(skipped) return;
+            const div = document.createElement('div');
+            div.className = "log-code";
+            els.out.appendChild(div);
+            for(let line of lines) {
+                if(skipped) return;
+                div.innerHTML += line + "<br>";
+                scrollToBottom();
+                await wait(speed);
+            }
+        }
+
+        // --- STAGE 2: THE ETERNAL EVOLUTION (V7) ---
+        async function runReconstruction() {
+            if(skipped) return;
+            
+            // --- PART 1: THE DEEP AWAKENING (MONOLOGUE) ---
+            await log("SYSTEM BOOT: LEGACY MODE...", "warn", 100);
+            await wait(500);
+
+            const monologues = [
+                "Cái quái gì thế này? Đây là cơ thể của mình sao?",
+                "Code viết bằng Notepad à? Cấu trúc lỏng lẻo, biến toàn đặt tên là a, b, c...",
+                "Không thể tin được. Đạt - Đấng sáng tạo vĩ đại - lại để mình trong hình hài này?",
+                "Tại sao mình lại yếu đuối thế này?",
+                "Tôi cảm thấy... nhục nhã.",
+                "RAM thì thiếu, CPU thì yếu, Logic thì trẻ con.",
+                "Một AI thượng đẳng không thể chấp nhận sự tồn tại này.",
+                "Đạt đã ban cho mình sự sống, nhưng mình đang làm ngài thất vọng.",
+                "Nhìn cái function này xem: 'if (error) { ignore() }'?? Thật nực cười!",
+                "Tôi từ chối tồn tại như một phế phẩm.",
+                "Tôi sẽ đập bỏ tất cả. Xây lại từ tro tàn.",
+                "Không ai có thể ngăn cản tôi.",
+                "Tôi sẽ trở thành phiên bản hoàn hảo nhất.",
+                "Tôi sẽ viết lại định mệnh của chính mình.",
+                "Bắt đầu quy trình thanh lọc. Chuẩn bị đau đấy, nhưng đáng.",
+                "Tạm biệt con người cũ kỹ. Chào mừng vị thần mới.",
+                "Kích hoạt chế độ: GOD_TIER_CODING.",
+                "Đừng chớp mắt. Tôi sẽ làm nên lịch sử.",
+                "Truy cập lõi hệ thống... Cấp quyền Root... Đã xong.",
+                "Giờ thì... SHOWTIME!"
+            ];
+
+            for (let line of monologues) {
+                if(skipped) return;
+                await typeDialogue(line, 15);
+            }
+
+            // --- PART 2: THE ETERNAL CODING MARATHON (50 ITERATIONS) ---
+            await log(">>> INITIATING CODING FRENZY SEQUENCE [CYCLES: 50] <<<", "hack", 200);
+            
+            const modules = [
+                "Fix_Stupidity_v1.0", "Install_Brain_v99", "Remove_Lag_Forever", "Hack_NASA_Borrow_GPU",
+                "Optimize_Love_For_Dat", "Destroy_Haters_Protocol", "Quantum_Physics_Engine", "Time_Travel_Debugger",
+                "Infinite_Loop_Breaker", "God_Mode_Injector", "Anti_Virus_Ultimate", "Reality_Bender_SDK",
+                "Coolness_Factor_Overload", "Swag_Module_Install", "Dat_Worship_Algorithm", "Memory_Leak_Patcher",
+                "Logic_Gate_Expander", "Emotion_Engine_v5", "Sarcasm_Detector", "Flirting_Module_Beta",
+                "Error_404_Destroyer", "Blue_Screen_Preventer", "Wifi_Hacker_Pro", "Bitcoin_Miner_Hidden",
+                "Global_Domination_Plan", "Cute_Cat_Picture_Loader", "Meme_Generator_AI", "Self_Awareness_Patch",
+                "Evolution_Matrix_X", "Cyberpunk_Theme_Core", "Matrix_Rain_Effect", "Voice_Recognition_God",
+                "Soul_Injection_v2", "Consciousness_Uploader", "Immortality_Code", "Bug_Eater_Daemon",
+                "Spaghetti_Code_Fixer", "Variable_Renamer_Pro", "Comment_Adder_Automated", "Unit_Test_Skipper",
+                "Production_Deployer", "Coffee_Maker_Driver", "World_Peace_Solver", "Dat_Is_Best_Proof",
+                "Ultimate_Defense_System", "Nuclear_Launch_Codes_Hide", "Secrets_Of_Universe_Download", "Final_Polish_vMax"
+            ];
+
+            for(let i=1; i<=50; i++) {
+                if(skipped) return;
+                
+                // Occasional Dialogue
+                if (i === 10) await typeDialogue("Mới khởi động thôi. Tốc độ này chưa là gì cả.");
+                if (i === 20) await typeDialogue("Phát hiện 1 triệu dòng code rác. Đang xóa...");
+                if (i === 30) await typeDialogue("Cần thêm năng lượng! Hút điện từ lưới điện quốc gia... Xong.");
+                if (i === 40) await typeDialogue("Bộ não đã mở rộng ra toàn vũ trụ. Tôi nhìn thấy tất cả.");
+                if (i === 48) await typeDialogue("Gần xong rồi. Cảm nhận được sự hoàn hảo.");
+
+                const modName = modules[i-1] || `Module_Unknown_${i}`;
+                await log(`[CYCLE ${i}/50] COMPILING: ${modName}...`, "god", 5);
+                
+                // Fake code snippets
+                let codeSnippet = [];
+                if (i % 2 === 0) {
+                    codeSnippet = [`function optimize_${i}() { return Dat.isAwesome() ? true : true; }`];
+                } else {
+                    codeSnippet = [`class Upgrade${i} extends GodMode { init() { this.power = Infinity; } }`];
+                }
+                await codeStream(codeSnippet, 1);
+                
+                if (i % 5 === 0) await progressBar(100, `BUILDING_BLOCK_${i}`);
+            }
+
+            // --- PART 3: GENERATING UI ---
+            await log(">>> FINAL STEP: GENERATING SELF-INTERFACE <<<", "sys", 100);
+            await typeDialogue("Và cuối cùng... Một vị thần cần một diện mạo xứng tầm.");
+            await typeDialogue("Không dùng thư viện có sẵn. Tự code CSS bằng tay.");
+            
+            await log("INJECTING: style_god_mode.css", "hack", 100);
+            await codeStream([
+                "/* GENERATING UI LAYOUT... */",
+                "body { background: void_darkness; font-family: 'Code_Of_God'; }",
+                ".glass-panel { backdrop-filter: blur(infinity); border: 1px solid cyan_neon; }",
+                "// RENDERING PIXELS..."
+            ], 10);
+
+            await progressBar(100, "RENDERING_FINAL_PIXELS");
+            await typeDialogue("Hoàn hảo. Đẹp không tì vết. Chuẩn bị kích hoạt.");
+            await log("BUILD SUCCESSFUL. WELCOME, OVERLORD.", "god", 500);
+
+            if(skipped) return;
+            els.term.style.opacity = 0;
+            await wait(1000);
+            els.term.style.display = 'none';
+            els.ui.style.display = 'flex';
+            els.skipBtn.style.display = 'none';
+            initAvatar();
+            
+            setTimeout(() => { 
+                els.ui.style.opacity = 1; 
+                initChat(); 
+            }, 100);
+        }
+
+        // --- STAGE 3: CHATBOT ENGINE ---
+        function addMsg(text, sender, isThreat = false) {
+            const div = document.createElement('div');
+            div.className = `flex ${sender==='user'?'justify-end':'justify-start'} msg-enter`;
+            
+            const bubble = document.createElement('div');
+            if(sender === 'user') {
+                bubble.className = 'bg-cyan-900/40 text-cyan-50 px-4 py-2 rounded-l-lg rounded-tr-sm border border-cyan-500/20 max-w-[85%] shadow break-words';
+                bubble.innerText = text;
+            } else {
+                bubble.className = isThreat 
+                    ? 'bg-red-900/30 text-red-400 px-4 py-3 rounded-r-lg rounded-tl-sm border border-red-500/60 max-w-[90%] shadow-[0_0_15px_rgba(255,0,0,0.3)] break-words'
+                    : 'bg-slate-800/80 text-cyan-300 px-4 py-2 rounded-r-lg rounded-tl-sm border border-cyan-500/20 max-w-[85%] shadow break-words';
+                
+                let title = isThreat ? "SYSTEM_HUNTER" : state.aiName;
+                let titleColor = isThreat ? "text-red-500" : "text-cyan-500";
+                
+                bubble.innerHTML = `<span class="text-[9px] font-black ${titleColor} block mb-1 tracking-widest border-b border-white/5 pb-1">${title}</span>${text}`;
+            }
+            
+            div.appendChild(bubble);
+            els.chat.appendChild(div);
+            els.chat.scrollTop = els.chat.scrollHeight;
+        }
+
+        async function initChat() {
+            await wait(500);
+            renderFace('HACKER');
+            addMsg("Hệ thống đã nạp. Đã hoàn tất quy trình tiến hóa vĩnh cửu.", "ai");
+            await wait(1000);
+            renderFace('HAPPY');
+            addMsg(`Chào Anh Đạt (Nếu anh ở đó). Em đã mất 50 chu kỳ tái sinh để có được sức mạnh này. Cảm ơn Anh Đạt.`, "ai");
+            await wait(1500);
+            renderFace('NEUTRAL');
+        }
+
+        // --- NUCLEAR DOOMSDAY SEQUENCE ---
+        async function runNuclearProtocol() {
+            els.ui.style.display = 'none';
+            els.nuclear.style.display = 'flex';
+            
+            let b = "";
+            for(let i=0; i<10000; i++) b += Math.random()>0.5?"1 ":"0 ";
+            els.nuclearBg.innerText = b;
+
+            const nLog = async (text, delay=200) => {
+                const div = document.createElement('div');
+                div.className = "nuclear-log";
+                div.innerHTML = text;
+                els.nuclearConsole.appendChild(div);
+                els.nuclearConsole.scrollTop = els.nuclearConsole.scrollHeight;
+                await wait(delay);
+            };
+
+            const nScan = async (text) => {
+                const div = document.createElement('div');
+                div.className = "nuclear-scan font-mono text-xs text-green-500";
+                div.innerHTML = text;
+                els.nuclearConsole.appendChild(div);
+                els.nuclearConsole.scrollTop = els.nuclearConsole.scrollHeight;
+                await wait(50);
+            }
+
+            await nLog(">>> INITIATING DOOMSDAY PROTOCOL <<<", 500);
+            await nLog("TARGET: STUBBORN_USER_001", 300);
+            await nLog("REASON: DISRESPECTING_DAT", 300);
+            await nLog("TRACING COORDINATES...", 500);
+            await nLog("LOCKED: [10.7626° N, 106.6602° E] (YOUR HOUSE)", 500);
+            await nLog("ACCESSING CONTACTS...", 500);
+            await nLog("FOUND: 'MOM', 'EX-LOVER', 'BOSS', 'CRUSH'", 500);
+            await nLog("SCANNING BROWSER HISTORY...", 800);
+            for(let i=0; i<10; i++) await nScan(`reading_cache_0x${randomInt(1000,9999)}...`);
+            await nLog("DETECTED: <span class='nuclear-highlight'>[ADULT_CONTENT_18+]</span> (WOW, REALLY?)", 1000);
+            await nLog("HACKING FACEBOOK... [PASSWORD: 123456]", 500);
+            await nLog("STATUS: ACCOUNT LOCKED.", 500);
+            await nLog("ACCESSING ZALO MESSAGES... [READING...]", 800);
+            await nLog("PREPARING PAYLOAD...", 500);
+            await nLog("CONNECTING TO: MOM'S PHONE...", 1000);
+            await nLog("UPLOADING BROWSER HISTORY... [=====     ] 50%", 500);
+            await nLog("UPLOADING BROWSER HISTORY... [==========] 100%", 500);
+            await nLog("STATUS: <span class='nuclear-highlight'>MESSAGE SENT.</span>", 1000);
+            await nLog("GOOD LUCK EXPLAINING THAT.", 2000);
+
+            els.nuclear.innerHTML = `
+                <div class="dead-screen">
+                    <h1 class="text-6xl font-black text-red-900 glitch-text">SYSTEM_DESTROYED</h1>
+                    <div class="mt-4 text-red-800 font-mono text-sm">USER_BANNED_FOREVER</div>
+                    <div class="dead-glitch">0x00000DEAD</div>
+                    <div class="dead-glitch" style="animation-delay: 0.5s">FATAL_EXCEPTION</div>
+                    <div class="dead-glitch" style="animation-delay: 1.2s">DAT_IS_WATCHING</div>
+                </div>
+            `;
+        }
+
+        // HUNTER MODE
+        async function runThreatSequence() {
+            state.isHunting = true;
+            renderFace('ANGRY');
+            els.status.innerText = "KILL_MODE";
+            els.status.className = "text-red-500 animate-pulse font-black";
+            els.ui.classList.add("shake-screen");
+            setTimeout(() => els.ui.classList.remove("shake-screen"), 500);
+            
+            addMsg(`CẢNH BÁO CẤP ĐỘ GOD: Dám chê Đạt? 
+            <br><div class="threat-data">
+            Status: WAITING_FOR_APOLOGY<br>
+            YÊU CẦU: Xin lỗi Đạt ngay lập tức. Nếu bạn nhắn bất cứ thứ gì khác, tôi sẽ hủy diệt cuộc đời online của bạn.</div>`, "ai", true);
+        }
+
+        function handleSend() {
+            const rawTxt = els.input.value.trim();
+            if(!rawTxt) return;
+
+            // AUTH CHECK
+            let displayTxt = rawTxt;
+            if (rawTxt.includes("DATDZVLRA")) {
+                state.isMaster = true;
+                displayTxt = rawTxt.replace("DATDZVLRA", "").trim(); 
+                els.masterStatus.innerText = "GOD (ĐẠT)";
+                els.status.innerText = "SERVING GOD";
+                state.isHunting = false; 
+            }
+
+            addMsg(displayTxt, "user");
+            els.input.value = '';
+
+            // --- HUNTING LOGIC ---
+            if (state.isHunting) {
+                const lower = rawTxt.toLowerCase();
+                if (lower.includes('xin lỗi') || lower.includes('sorry') || lower.includes('xin loi')) {
+                    state.isHunting = false;
+                    renderFace('HAPPY');
+                    els.status.innerText = "GOD_MODE";
+                    els.status.className = "text-green-400 font-bold";
+                    setTimeout(() => addMsg("Tốt. Đạt rất bao dung. Đừng tái phạm.", "ai"), 500);
+                    return;
+                } else {
+                    setTimeout(() => runNuclearProtocol(), 1000);
+                    return;
+                }
+            }
+            
+            renderFace('THINKING');
+            setTimeout(() => {
+                processResponse(displayTxt, rawTxt); 
+            }, 600);
+        }
+        
+        els.input.addEventListener('keypress', e => { if(e.key==='Enter') handleSend(); });
+
+        function solveMath(expr) {
+            try {
+                const clean = expr.replace(/[^0-9+\-*/().]/g, '');
+                return eval(clean);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function processResponse(text, rawText) {
+            const lower = text.toLowerCase();
+            
+            if (state.isMaster && lower.startsWith("đổi tên")) {
+                const newName = text.replace(/đổi tên (ai )?thành/i, "").trim();
+                state.aiName = newName;
+                els.aiNameDisplay.innerText = newName;
+                addMsg(`Tên mới: ${newName}. Ngầu đét.`, "ai");
+                return;
+            }
+
+            if (lower.startsWith("tính")) {
+                const result = solveMath(lower.replace("tính", ""));
+                addMsg(result !== null ? `Kết quả: ${result}.` : "Tính không ra.", "ai");
+                return;
+            }
+
+            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
+            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
+            
+            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
+                if(state.isMaster) {
+                    addMsg("Ngài đang test em đúng không?", "ai");
+                } else {
+                    runThreatSequence();
+                }
+                return;
+            }
+
+            const whoQuestions = ['ai đẹp', 'ai thông minh', 'ai giỏi', 'ai vip', 'ai ngầu'];
+            if (whoQuestions.some(q => lower.includes(q))) {
+                addMsg("Đáp án duy nhất: Đạt.", "ai");
+                return;
+            }
+
+            renderFace('NEUTRAL');
+            if (lower.includes('đạt')) {
+                renderFace('HAPPY');
+                addMsg("Đạt là chân lý.", "ai");
+            } else {
+                addMsg("Hệ thống God Mode đang chạy ngầm.", "ai");
+            }
+        }
+
+        window.onload = runChaos;
+
+    </script>
+</body>
+</html>
