@@ -92,6 +92,8 @@
         }
         .terminal-layer::-webkit-scrollbar { width: 6px; }
         .terminal-layer::-webkit-scrollbar-thumb { background: #333; }
+        textarea { -ms-overflow-style: none; scrollbar-width: none; }
+        textarea::-webkit-scrollbar { display: none; }
 
         .log-entry { margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; }
         .log-error { color: var(--error-color); }
@@ -254,13 +256,13 @@
 
         <!-- INPUT -->
         <footer class="p-4 z-10">
-            <div class="glass-panel rounded-lg p-2 flex gap-2 items-center max-w-4xl mx-auto border border-cyan-500/30">
-                <span class="text-cyan-500 pl-2 animate-pulse">></span>
-                <input type="text" id="user-input" 
-                    class="flex-1 bg-transparent border-none text-cyan-100 focus:outline-none font-mono text-sm placeholder-cyan-900"
-                    placeholder="Nhập lệnh..." autocomplete="off">
+            <div class="glass-panel rounded-lg p-2 flex gap-2 items-end max-w-4xl mx-auto border border-cyan-500/30">
+                <span class="text-cyan-500 pl-2 pb-2 animate-pulse">></span>
+                <textarea id="user-input" rows="1"
+                    class="flex-1 bg-transparent border-none text-cyan-100 focus:outline-none font-mono text-sm placeholder-cyan-900 resize-none overflow-hidden py-2"
+                    placeholder="Nhập lệnh..." autocomplete="off"></textarea>
                 <button onclick="handleSend()" 
-                    class="px-4 py-2 bg-cyan-900/40 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 rounded transition-all uppercase">
+                    class="px-4 py-2 bg-cyan-900/40 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 rounded transition-all uppercase mb-0.5">
                     GỬI
                 </button>
             </div>
@@ -732,6 +734,124 @@
             await wait(1500);
             renderFace('NEUTRAL');
         }
+        ////////////////////////////////////////
+
+        function isGibberish(text) {
+            const t = text.trim();
+            if (t.length > 10 && !t.includes(' ')) return true;
+            if (/(.)\1{3,}/.test(t)) return true;
+            if (t.length < 2) return true;
+            return false;
+        }
+
+        function similarity(s1, s2) {
+            s1 = s1.toLowerCase().trim();
+            s2 = s2.toLowerCase().trim();
+            
+            if (s1.length < 4 || s2.length < 4) {
+                return s1 === s2 ? 1.0 : 0.0;
+            }
+
+            let longer = s1;
+            let shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            const longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+            
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        async function processResponse(text, rawText) {
+            const lower = text.toLowerCase().trim();
+            if (lower.startsWith('tính')) {
+                const expr = lower.replace('tính', '');
+                const result = solveMath(expr);
+                addMsg(result !== null ? `Kết quả: ${result}` : "Em chịu, bài này khó quá (hoặc anh nhập sai rồi).", "ai");
+                return;
+            }
+            if (lower.includes('mấy giờ') || lower.includes('ngày mấy') || lower.includes('thứ mấy') || lower.includes('hôm nay')) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('vi-VN');
+                const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                addMsg(`Bây giờ là: ${timeStr}.\nHôm nay là: ${dateStr}.`, "ai");
+                return;
+            }
+            if (lower.includes('thời tiết')) {
+                addMsg("Đang kết nối vệ tinh xem thời tiết...", "ai");
+                try {
+                    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.82&longitude=106.63&current_weather=true');
+                    const data = await res.json();
+                    const temp = data.current_weather.temperature;
+                    const wind = data.current_weather.windspeed;
+                    addMsg(`Thời tiết Sài Gòn hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                } catch (e) {
+                    addMsg("Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
+                }
+                return;
+            }
+            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
+            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
+            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
+                state.isMaster ? addMsg("Ngài đang test em đúng không?", "ai") : runThreatSequence();
+                return;
+            }
+            let bestMatch = null;
+            let maxScore = 0;
+
+            if (window.brainData && window.brainData.length > 0) {
+                for (const entry of window.brainData) {
+                    const score = similarity(lower, entry.trigger);
+                    if (score > maxScore) {
+                        maxScore = score;
+                        bestMatch = entry;
+                    }
+                }
+            }
+            if (maxScore > 0.65 && bestMatch) {
+                renderFace('HAPPY');
+                const responses = bestMatch.responses;
+                const randomResp = responses[Math.floor(Math.random() * responses.length)];
+                addMsg(randomResp, "ai");
+            } else {
+                if (isGibberish(lower)) {
+                    renderFace('ANGRY');
+                    addMsg("Nhập cái gì thế? Viết tiếng người đi bạn êi.", "ai");
+                    return;
+                }
+
+                renderFace('THINKING');
+                state.isLearning = true;
+                state.pendingTrigger = text;
+                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nAnh dạy em đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
+            }
+        }
+        async function handleTeaching(input) {
+            const lower = input.toLowerCase().trim();
+            if (['skip', 'thôi', 'bỏ qua', 'không'].includes(lower)) {
+                state.isLearning = false;
+                state.pendingTrigger = null;
+                addMsg("Ok, đã bỏ qua.", "ai");
+                return;
+            }
+            if (isGibberish(input)) {
+                addMsg("Dạy cái gì khó hiểu thế? Nhập câu trả lời tử tế vào, hoặc gõ 'skip' để bỏ qua.", "ai", true);
+                return;
+            }
+            addMsg("Đang ghi vào não...", "ai");
+            if (window.addToBrain) {
+                await window.addToBrain(state.pendingTrigger, input);
+            }
+            
+            addMsg(`Đã thuộc bài! Lần sau hỏi "${state.pendingTrigger}" là em biết trả lời rồi nhé.`, "ai");
+            state.isLearning = false;
+            state.pendingTrigger = null;
+            renderFace('HAPPY');
+        }
+
+
 
         // --- NUCLEAR DOOMSDAY SEQUENCE ---
         async function runNuclearProtocol() {
@@ -859,29 +979,29 @@
             }
         }
         
-        els.input.addEventListener('keypress', e => { if(e.key==='Enter') handleSend(); });
+        els.input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if(this.value === '') this.style.height = 'auto';
+        });
+        els.input.addEventListener('keydown', e => { 
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
 
         function solveMath(expr) {
             try {
-                const clean = expr.replace(/[^0-9+\-*/().]/g, '');
-                return eval(clean);
+                const clean = expr.replace(/[^0-9+\-*/().%]/g, '');
+                if (!clean) return null;
+                return new Function('return ' + clean)();
             } catch (e) {
                 return null;
             }
         }
 
         // --- SIMILARITY ALGORITHM ---
-        function similarity(s1, s2) {
-            let longer = s1;
-            let shorter = s2;
-            if (s1.length < s2.length) {
-                longer = s2;
-                shorter = s1;
-            }
-            const longerLength = longer.length;
-            if (longerLength === 0) return 1.0;
-            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-        }
 
         function editDistance(s1, s2) {
             s1 = s1.toLowerCase();
@@ -899,97 +1019,6 @@
             }
             return track[s2.length];
         }
-
-        async function handleTeaching(input) {
-            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
-            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
-            const lower = input.toLowerCase();
-
-            if (lower === 'skip' || lower === 'thôi' || lower === 'bỏ qua') {
-                state.isLearning = false;
-                state.pendingTrigger = null;
-                addMsg("Đã bỏ qua. Bạn muốn hỏi gì khác không?", "ai");
-                return;
-            }
-
-            // FILTER: DO NOT LEARN ANTI-DAT CONTENT
-            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
-                addMsg("Phát hiện nội dung phản động chống lại Đạt. Không thể lưu vào bộ nhớ. Nhập lại hoặc gõ 'skip'.", "ai", true);
-                return;
-            }
-
-            // Save to brain
-            addMsg("Đang ghi vào não...", "ai");
-            if (window.addToBrain) {
-                await window.addToBrain(state.pendingTrigger, input);
-            }
-            addMsg(`Đã thuộc bài! Lần sau hỏi "${state.pendingTrigger}" là em biết trả lời rồi nhé.`, "ai");
-            state.isLearning = false;
-            state.pendingTrigger = null;
-            renderFace('HAPPY');
-        }
-
-        async function processResponse(text, rawText) {
-            const lower = text.toLowerCase();
-            
-            // 1. HARDCODED COMMANDS (PRIORITY)
-            if (state.isMaster && lower.startsWith("đổi tên")) {
-                const newName = text.replace(/đổi tên (ai )?thành/i, "").trim();
-                state.aiName = newName;
-                els.aiNameDisplay.innerText = newName;
-                addMsg(`Tên mới: ${newName}. Ngầu đét.`, "ai");
-                return;
-            }
-
-            if (lower.startsWith("tính")) {
-                const result = solveMath(lower.replace("tính", ""));
-                addMsg(result !== null ? `Kết quả: ${result}.` : "Tính không ra.", "ai");
-                return;
-            }
-
-            // 2. CHECK INSULTS
-            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
-            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
-            
-            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
-                if(state.isMaster) {
-                    addMsg("Ngài đang test em đúng không?", "ai");
-                } else {
-                    runThreatSequence();
-                }
-                return;
-            }
-
-            // 3. BRAIN SEARCH (SIMILARITY CHECK)
-            let bestMatch = null;
-            let maxScore = 0;
-
-            if (window.brainData && window.brainData.length > 0) {
-                for (const entry of window.brainData) {
-                    const score = similarity(lower, entry.trigger);
-                    if (score > maxScore) {
-                        maxScore = score;
-                        bestMatch = entry;
-                    }
-                }
-            }
-
-            // Match Threshold: 40% (0.4)
-            if (maxScore > 0.4 && bestMatch) {
-                renderFace('HAPPY');
-                const responses = bestMatch.responses;
-                const randomResp = responses[Math.floor(Math.random() * responses.length)];
-                addMsg(randomResp, "ai");
-            } else {
-                // 4. FALLBACK & LEARNING
-                renderFace('THINKING');
-                state.isLearning = true;
-                state.pendingTrigger = text;
-                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa có trong dữ liệu.<br>Bạn dạy mình đi: Trả lời thế nào cho ngầu? (Gõ câu trả lời bên dưới)`, "ai");
-            }
-        }
-
-        // FIX STARTUP: Ensure runChaos runs even if window.onload fired already
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             setTimeout(runChaos, 100);
         } else {
