@@ -763,32 +763,56 @@
             
             return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
         }
-
         async function processResponse(text, rawText) {
             const lower = text.toLowerCase().trim();
-            if (lower.startsWith('tính')) {
-                const expr = lower.replace('tính', '');
-                const result = solveMath(expr);
-                addMsg(result !== null ? `Kết quả: ${result}` : "Em chịu, bài này khó quá (hoặc anh nhập sai rồi).", "ai");
-                return;
+            const mathKeywords = ['bằng bao nhiêu', 'bằng mấy', 'kết quả là', 'đáp án', 'tính'];
+            const hasMathSign = /[+\-*/^%]/.test(lower) || /\b(cộng|trừ|nhân|chia|x)\b/.test(lower);
+            if ((hasMathSign || mathKeywords.some(k => lower.includes(k))) && /\d/.test(lower)) {
+                let mathStr = lower
+                    .replace(/cộng/g, '+')
+                    .replace(/trừ/g, '-')
+                    .replace(/nhân/g, '*') 
+                    .replace(/chia/g, '/') 
+                    .replace(/x/g, '*')
+                    .replace(/:/g, '/')
+                    .replace(/bằng/g, '')
+                    .replace(/mấy/g, '')
+                    .replace(/bao nhiêu/g, '')
+                    .replace(/là/g, '')
+                    .replace(/tính/g, '')
+                    .replace(/,/g, '.');
+                const mathRegex = /[0-9\.\(\)\+\-\*\/\^% ]+/g;
+                const matches = mathStr.match(mathRegex);
+        
+                if (matches) {
+                    let potentialMath = matches.reduce((a, b) => a.length > b.length ? a : b).trim();
+                    if (/[+\-*/^%]/.test(potentialMath) && potentialMath.length > 2) {
+                        const result = solveMath(potentialMath);
+                        if (result !== null) {
+                            addMsg(`🧮 Phép tính: ${potentialMath}\n👉 Kết quả: ${result}`, "ai");
+                            return;
+                        }
+                    }
+                }
             }
             if (lower.includes('mấy giờ') || lower.includes('ngày mấy') || lower.includes('thứ mấy') || lower.includes('hôm nay')) {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('vi-VN');
                 const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                addMsg(`Bây giờ là: ${timeStr}.\nHôm nay là: ${dateStr}.`, "ai");
+                addMsg(`⌚ Bây giờ là: ${timeStr}.\n📅 Hôm nay là: ${dateStr}.`, "ai");
                 return;
             }
+        
             if (lower.includes('thời tiết')) {
-                addMsg("Đang kết nối vệ tinh xem thời tiết...", "ai");
+                addMsg("🌍 Đang kết nối vệ tinh xem thời tiết...", "ai");
                 try {
                     const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.82&longitude=106.63&current_weather=true');
                     const data = await res.json();
                     const temp = data.current_weather.temperature;
                     const wind = data.current_weather.windspeed;
-                    addMsg(`Thời tiết Sài Gòn hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                    addMsg(`🌤️ Thời tiết Sài Gòn hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
                 } catch (e) {
-                    addMsg("Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
+                    addMsg("📡 Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
                 }
                 return;
             }
@@ -800,7 +824,7 @@
             }
             let bestMatch = null;
             let maxScore = 0;
-
+        
             if (window.brainData && window.brainData.length > 0) {
                 for (const entry of window.brainData) {
                     const score = similarity(lower, entry.trigger);
@@ -821,7 +845,7 @@
                     addMsg("Nhập cái gì thế? Viết tiếng người đi bạn êi.", "ai");
                     return;
                 }
-
+        
                 renderFace('THINKING');
                 state.isLearning = true;
                 state.pendingTrigger = text;
@@ -1028,4 +1052,5 @@
     </script>
 </body>
 </html>
+
 
