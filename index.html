@@ -304,9 +304,18 @@
         }));
 
         // --- FIREBASE SETUP ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const appId = 'dat-ai-promax';
+        const firebaseConfig = {
+            apiKey: "AIzaSyCm6h0j8mBd8nddAIh3bQzqkDLf-8q0Lnk",
+            authDomain: "datai-567e4.firebaseapp.com",
+            projectId: "datai-567e4",
+            storageBucket: "datai-567e4.firebasestorage.app",
+            messagingSenderId: "637233972322",
+            appId: "1:637233972322:web:6125687a7e4ad9d6c9fd3b",
+            measurementId: "G-RKBGGT4JHK"
+        };
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
@@ -994,3 +1003,4 @@
     </script>
 </body>
 </html>
+
