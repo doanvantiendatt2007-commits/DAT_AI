@@ -847,12 +847,16 @@
                 }
                 return;
             }
-            if (lower.startsWith('mở nhạc') || lower.startsWith('nghe') || lower.startsWith('youtube')) {
-                const song = rawText.replace(/^(mở nhạc|nghe|youtube)/i, '').trim();
+            const musicRegex = /^(mở|bật|lên)\s+(nhạc|bài)|^(nghe|thẩm|thưởng thức)|^(youtube)/i;
+            if (musicRegex.test(lower)) {
+                const song = rawText.replace(musicRegex, '').trim();
                 if(song) {
                     addMsg(`🎵 Lên nhạc: ${song}! Quẩy lên!`, "ai");
-                    await wait(1500);
+                    await wait(1500); 
                     window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`, '_blank');
+                    return;
+                } else {
+                    addMsg("Mở bài gì mới được chứ? Nói tên bài đi đại ca.", "ai");
                     return;
                 }
             }
@@ -1144,3 +1148,4 @@
     </script>
 </body>
 </html>
+
