@@ -763,6 +763,27 @@
             
             return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
         }
+        function normalizePronouns(text) {
+            let s = text.toLowerCase();
+            const meGroup = [
+                'bố mày', 'chồng', 'vợ',
+                'tôi', 'tao', 'tui', 'tớ', 'anh', 'em', 'minh', 'mình',
+                't\\b'
+            ];
+            const youGroup = [
+                'bạn', 'mày', 'chế', 'ní', 'ông', 'bà', 'cưng', 'bot', 'ad',
+                'm\\b', 'b\\b'
+            ];
+            const meRegex = new RegExp(`\\b(${meGroup.join('|')})\\b`, 'g');
+            s = s.replace(meRegex, 'tôi');
+            const youRegex = new RegExp(`\\b(${youGroup.join('|')})\\b`, 'g');
+            s = s.replace(youRegex, 'bạn');
+        
+            return s;
+        }
+
+
+        
         async function processResponse(text, rawText) {
             const lower = text.toLowerCase().trim();
             const mathKeywords = ['bằng bao nhiêu', 'bằng mấy', 'kết quả là', 'đáp án', 'tính'];
@@ -789,7 +810,7 @@
                     if (/[+\-*/^%]/.test(potentialMath) && potentialMath.length > 2) {
                         const result = solveMath(potentialMath);
                         if (result !== null) {
-                            addMsg(`🧮 Phép tính: ${potentialMath}\n👉 Kết quả: ${result}`, "ai");
+                            addMsg(`Phép tính: ${potentialMath}\nKết quả: ${result}`, "ai");
                             return;
                         }
                     }
@@ -799,20 +820,20 @@
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('vi-VN');
                 const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                addMsg(`⌚ Bây giờ là: ${timeStr}.\n📅 Hôm nay là: ${dateStr}.`, "ai");
+                addMsg(`Bây giờ là: ${timeStr}.\nHôm nay là: ${dateStr}.`, "ai");
                 return;
             }
         
             if (lower.includes('thời tiết')) {
-                addMsg("🌍 Đang kết nối vệ tinh xem thời tiết...", "ai");
+                addMsg("Đang kết nối vệ tinh xem thời tiết...", "ai");
                 try {
                     const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.82&longitude=106.63&current_weather=true');
                     const data = await res.json();
                     const temp = data.current_weather.temperature;
                     const wind = data.current_weather.windspeed;
-                    addMsg(`🌤️ Thời tiết Sài Gòn hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                    addMsg(`Thời tiết hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
                 } catch (e) {
-                    addMsg("📡 Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
+                    addMsg("Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
                 }
                 return;
             }
@@ -824,10 +845,12 @@
             }
             let bestMatch = null;
             let maxScore = 0;
+            const normalizedInput = normalizePronouns(lower);
         
             if (window.brainData && window.brainData.length > 0) {
                 for (const entry of window.brainData) {
-                    const score = similarity(lower, entry.trigger);
+                    const normalizedTrigger = normalizePronouns(entry.trigger);
+                    const score = similarity(normalizedInput, normalizedTrigger);
                     if (score > maxScore) {
                         maxScore = score;
                         bestMatch = entry;
@@ -1052,5 +1075,6 @@
     </script>
 </body>
 </html>
+
 
 
