@@ -243,6 +243,7 @@
                         STATUS: <span id="status-text" class="text-green-400 font-bold">CONNECTED</span>
                         <span id="brain-indicator" class="hidden text-yellow-400 text-[9px] animate-pulse">[BRAIN_SYNC]</span>
                     </div>
+                    <button onclick="toggleVoice()" id="voice-btn" class="text-[10px] border border-cyan-500/50 text-cyan-500 px-2 py-1 rounded hover:bg-cyan-900/50"> MÕM: MỞ </button>
                 </div>
             </div>
             <div class="text-right hidden sm:block">
@@ -526,6 +527,22 @@
             initChat();
         }
 
+        function toggleVoice() {
+            voiceOn = !voiceOn;
+            const btn = document.getElementById('voice-btn');
+            if (voiceOn) {
+                btn.innerText = "MÕM: MỞ";
+                btn.classList.remove("text-gray-500", "border-gray-500");
+                btn.classList.add("text-cyan-500", "border-cyan-500/50");
+                speak("Đã mở mồm");
+            } else {
+                window.speechSynthesis.cancel();
+                btn.innerText = "MÕM: KHÓA";
+                btn.classList.remove("text-cyan-500", "border-cyan-500/50");
+                btn.classList.add("text-gray-500", "border-gray-500");
+            }
+        }
+
         // --- STAGE 1: CHAOS ---
         async function runChaos() {
             let b = "";
@@ -714,11 +731,12 @@
                 
                 bubble.innerHTML = `<span class="text-[9px] font-black ${titleColor} block mb-1 tracking-widest border-b border-white/5 pb-1">${title}</span>${text}`;
             }
+            if (sender !== 'user') {
+                speak(text);
+            }
             
             div.appendChild(bubble);
             els.chat.appendChild(div);
-            
-            // FIX: Dùng requestAnimationFrame để đảm bảo cuộn xuống cuối sau khi render xong
             requestAnimationFrame(() => {
                 els.chat.scrollTop = els.chat.scrollHeight;
             });
@@ -744,25 +762,6 @@
             return false;
         }
 
-        function similarity(s1, s2) {
-            s1 = s1.toLowerCase().trim();
-            s2 = s2.toLowerCase().trim();
-            
-            if (s1.length < 4 || s2.length < 4) {
-                return s1 === s2 ? 1.0 : 0.0;
-            }
-
-            let longer = s1;
-            let shorter = s2;
-            if (s1.length < s2.length) {
-                longer = s2;
-                shorter = s1;
-            }
-            const longerLength = longer.length;
-            if (longerLength === 0) return 1.0;
-            
-            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
-        }
         function normalizePronouns(text) {
             let s = text.toLowerCase();
             const meGroup = [
@@ -780,6 +779,35 @@
             s = s.replace(youRegex, 'bạn');
         
             return s;
+        }
+
+        function cleanText(text) {
+            return text.toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+                .replace(/\s{2,}/g, " ")
+                .trim();
+        }
+        function getJaccardScore(s1, s2) {
+            const arr1 = new Set(s1.split(' '));
+            const arr2 = new Set(s2.split(' '));
+            const intersection = new Set([...arr1].filter(x => arr2.has(x)));
+            const union = new Set([...arr1, ...arr2]);
+            return intersection.size / union.size;
+        }
+        function smartSimilarity(input, trigger) {
+            const cleanInput = cleanText(input);
+            const cleanTrigger = cleanText(trigger);
+            if (cleanInput === cleanTrigger) return 1.0;
+            if (cleanTrigger.length < 4) return 0;
+            if (cleanInput.includes(cleanTrigger)) {
+                 if (!cleanTrigger.includes(' ')) return 0.6;
+                 return 0.85 + (cleanTrigger.length / cleanInput.length) * 0.1; 
+            }
+            if (cleanTrigger.includes(cleanInput) && cleanInput.length > 3) {
+                return 0.7;
+            }
+            return getJaccardScore(cleanInput, cleanTrigger);
         }
 
 
@@ -802,7 +830,7 @@
                     if (/[+\-*/^%]/.test(potentialMath) && potentialMath.length > 2) {
                         const result = solveMath(potentialMath);
                         if (result !== null) {
-                            addMsg(`Phép tính: ${potentialMath}\nKết quả: ${result}`, "ai");
+                            addMsg(`🧮 Phép tính: ${potentialMath}\n👉 Kết quả: ${result}`, "ai");
                             return;
                         }
                     }
@@ -814,7 +842,7 @@
         
                 if (lower.startsWith('google') || lower.startsWith('gú gồ')) {
                      addMsg(`🚀 Đang phóng ra Google tìm "${keyword}"...`, "ai");
-                     await wait(1500); 
+                     await wait(1000); 
                      window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
                      return;
                 }
@@ -877,12 +905,11 @@
             }
             if (lower.includes('mấy giờ') || lower.includes('ngày mấy') || lower.includes('thứ mấy') || lower.includes('hôm nay')) {
                 const now = new Date();
-                const timeStr = now.toLocaleTimeString('vi-VN');
-                const dateStr = now.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                addMsg(`Bây giờ là: ${timeStr}.\nHôm nay là: ${dateStr}.`, "ai");
+                addMsg(`🕒 Bây giờ là: ${now.toLocaleTimeString('vi-VN')}\n📅 Hôm nay là: ${now.toLocaleDateString('vi-VN')}`, "ai");
                 return;
             }
         
+            // --- 5. THỜI TIẾT ---
             if (lower.includes('thời tiết')) {
                 addMsg("🌍 Đang kết nối vệ tinh xem thời tiết...", "ai");
                 try {
@@ -890,13 +917,12 @@
                     const data = await res.json();
                     const temp = data.current_weather.temperature;
                     const wind = data.current_weather.windspeed;
-                    addMsg(`🌤️ Thời tiết hôm nay:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Bạn nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                    addMsg(`🌤️ Thời tiết Sài Gòn:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Nhớ giữ gìn sức khỏe nhé!)`, "ai");
                 } catch (e) {
                     addMsg("📡 Mất kết nối vệ tinh. Bạn nhìn ra cửa sổ đỡ nhé.", "ai");
                 }
                 return;
             }
-        
             const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi', 'gay', 'simp'];
             const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator', 'dat', 'dat09'];
             if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
@@ -910,42 +936,119 @@
             if (window.brainData && window.brainData.length > 0) {
                 for (const entry of window.brainData) {
                     const normalizedTrigger = normalizePronouns(entry.trigger);
-                    const score = similarity(normalizedInput, normalizedTrigger);
+                    const score = smartSimilarity(normalizedInput, normalizedTrigger);
+                    
                     if (score > maxScore) {
                         maxScore = score;
                         bestMatch = entry;
                     }
                 }
             }
-        
-            if (maxScore > 0.5 && bestMatch) {
+            console.log(`Input: "${normalizedInput}" | Match: "${bestMatch?.trigger}" | Score: ${maxScore.toFixed(2)}`);
+            if (maxScore > 0.65 && bestMatch) {
                 renderFace('HAPPY');
                 const responses = bestMatch.responses;
                 const randomResp = responses[Math.floor(Math.random() * responses.length)];
                 addMsg(randomResp, "ai");
             } else {
                 const knowledgeKeywords = [
-                    'là gì?', 'là ai?', 'thế nào?', 'cách', 'làm sao', 'tại sao?', 'ở đâu?', 'bao nhiêu?',
-                    'nghĩa là', 'hướng dẫn', 'công thức', 'nguyên lý', 'cấu tạo', 'tác dụng', 'nguồn gốc', 'định lý', 'nguyên lí', 'định lí'
+                    'là gì', 'là ai', 'thế nào', 'cách', 'làm sao', 'tại sao', 'ở đâu', 'bao nhiêu',
+                    'nghĩa là', 'hướng dẫn', 'công thức', 'nguyên lý', 'cấu tạo', 'tác dụng'
                 ];
-                
                 if (knowledgeKeywords.some(k => lower.includes(k))) {
-                    addMsg(`Câu này thâm sâu quá (Chắc là kiến thức chuyên ngành). Để tôi tra Google cho chuẩn nhé!`, "ai");
+                    addMsg(`Câu này thâm sâu quá. Để tôi tra Google cho chuẩn nhé!`, "ai");
                     await wait(1500); 
                     window.open(`https://www.google.com/search?q=${encodeURIComponent(rawText)}`, '_blank');
                     return;
                 }
+
                 if (isGibberish(lower)) {
                     renderFace('ANGRY');
                     addMsg("Nhập cái gì thế? Viết tiếng người đi bạn êi.", "ai");
                     return;
                 }
-        
                 renderFace('THINKING');
                 state.isLearning = true;
                 state.pendingTrigger = text;
                 addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nBạn dạy tôi đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
             }
+        }
+
+        let voiceOn = true;
+        let isSpeaking = false;
+        let speechQueue = [];
+        let currentAudio = null;
+
+        function calculateSpeed(text) {
+            const wordCount = text.trim().split(/\s+/).length;
+            if (wordCount < 8) return 1.0;
+            if (wordCount < 16) return 1.2;
+            if (wordCount < 22) return 1.3;
+            if (wordCount < 30) return 1.4;
+            return 1.5;
+        }
+
+        function detectLanguage(text) {
+            const vnRegex = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+            const vnCommonWords = /\b(tôi|bạn|mày|tao|anh|em|là|gì|đâu|không|có|chào|ngu|khôn|hát|yêu|ghét)\b/i;
+            if (vnRegex.test(text) || vnCommonWords.test(text)) return 'vi-VN';
+            return 'en-US';
+        }
+
+        function processQueue() {
+            if (!voiceOn || isSpeaking || speechQueue.length === 0) return;
+
+            isSpeaking = true; 
+            const text = speechQueue.shift(); 
+            const lang = detectLanguage(text);
+            const dynamicSpeed = calculateSpeed(text); 
+            console.log(`🔊 Đang nói: "${text}" | Số từ: ${text.split(' ').length} | Tốc độ: ${dynamicSpeed}`);
+
+            if (lang === 'vi-VN') {
+                const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=vi&q=${encodeURIComponent(text)}`;
+                currentAudio = new Audio(url);
+                currentAudio.playbackRate = dynamicSpeed; 
+                
+                currentAudio.onended = () => {
+                    isSpeaking = false;
+                    processQueue();
+                };
+                
+                currentAudio.onerror = () => {
+                    console.error("Lỗi tải audio VN");
+                    isSpeaking = false;
+                    processQueue();
+                };
+
+                currentAudio.play().catch(e => {
+                    isSpeaking = false;
+                    processQueue();
+                });
+
+            } else {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = dynamicSpeed; 
+
+                utterance.onend = () => {
+                    isSpeaking = false;
+                    processQueue();
+                };
+                
+                utterance.onerror = () => {
+                    isSpeaking = false;
+                    processQueue();
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+
+        function speak(text) {
+            if (!voiceOn) return;
+            speechQueue.push(text);
+            processQueue();
         }
         
         async function handleTeaching(input) {
@@ -1120,34 +1223,16 @@
                 return null;
             }
         }
-
-        // --- SIMILARITY ALGORITHM ---
-
-        function editDistance(s1, s2) {
-            s1 = s1.toLowerCase();
-            s2 = s2.toLowerCase();
-            const track = Array(s2.length + 1).fill(null).map((_, i) => i);
-        
-            for (let i = 1; i <= s1.length; i++) {
-                let prev = i;
-                for (let j = 1; j <= s2.length; j++) {
-                    const current = s1[i - 1] === s2[j - 1] ? track[j - 1] : Math.min(track[j - 1], prev, track[j]) + 1;
-                    track[j - 1] = prev;
-                    prev = current;
-                }
-                track[s2.length] = prev;
-            }
-            return track[s2.length];
-        }
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             setTimeout(runChaos, 100);
         } else {
             document.addEventListener('DOMContentLoaded', runChaos);
         }
 
+        
+
     </script>
 </body>
 </html>
-
 
 
