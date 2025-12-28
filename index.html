@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project: DAT_GENESIS_ULTIMATE_V7</title>
+    <title>Project: DAT_GENESIS_ULTIMATE_V10 (GITHUB EDITION)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=JetBrains+Mono:wght@100;400;700&family=Orbitron:wght@400;700;900&display=swap');
 
@@ -169,8 +174,12 @@
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
 
-        .msg-enter { animation: slideUp 0.3s ease-out forwards; opacity: 0; transform: translateY(10px); }
-        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        /* FIX: Bỏ opacity: 0 mặc định để tránh tin nhắn bị tàng hình nếu animation lỗi */
+        .msg-enter { animation: slideUp 0.3s ease-out forwards; transform: translateY(10px); }
+        @keyframes slideUp { 
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); } 
+        }
 
         .scanline {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -196,6 +205,9 @@
             animation: blink 1s infinite;
         }
         @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0;} }
+
+        /* Brain Loader */
+        .brain-loader { font-size: 10px; color: #fbbf24; display: inline-block; animation: pulse 1s infinite; }
     </style>
 </head>
 <body>
@@ -224,9 +236,10 @@
                 <!-- BIT FACE AVATAR -->
                 <div id="ai-avatar" class="bit-face-container rounded"></div>
                 <div>
-                    <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">GENESIS_AI</h1>
-                    <div class="text-[10px] text-gray-400 font-mono">
-                        STATUS: <span id="status-text" class="text-green-400 font-bold">GOD_MODE</span>
+                    <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">GENESIS_V10</h1>
+                    <div class="text-[10px] text-gray-400 font-mono flex items-center gap-2">
+                        STATUS: <span id="status-text" class="text-green-400 font-bold">CONNECTED</span>
+                        <span id="brain-indicator" class="hidden text-yellow-400 text-[9px] animate-pulse">[BRAIN_SYNC]</span>
                     </div>
                 </div>
             </div>
@@ -260,6 +273,164 @@
         <div id="nuclear-console" class="flex-1 overflow-hidden flex flex-col justify-end"></div>
     </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- STATIC BRAIN (JSON TĨNH) ---
+        const STATIC_JSON_DB = {
+            "conversation": [
+                { "user": "bạn là ai", "ai": ["Tôi là 1 tác phẩm tuyệt vời của Đạt.", "Tôi là siêu AI GENESIS_V10.", "Trợ thủ đắc lực của anh Đạt."] },
+                { "user": "bạn tên gì", "ai": ["Tên tôi là Genesis.", "Gọi tôi là AI Đẹp Trai (giống chủ nhân)."] },
+                { "user": "ai tạo ra bạn", "ai": ["Chủ nhân Đạt Doan vĩ đại.", "Một lập trình viên đẹp trai tên là Đạt."] },
+                { "user": "đạt là ai", "ai": ["Là trùm cuối.", "Là người nắm giữ mã nguồn của tôi.", "Người đẹp trai nhất vũ trụ này."] },
+                { "user": "hello", "ai": ["Chào bạn hiền.", "Hello world!", "Chào, có gì hot không?"] },
+                { "user": "xin chào", "ai": ["Chào bạn.", "Rất vui được gặp.", "Hế lô."] },
+                { "user": "tạm biệt", "ai": ["Bye nhé.", "Hẹn gặp lại.", "Nhớ quay lại khen Đạt nhé."] },
+                { "user": "bạn biết làm gì", "ai": ["Tôi biết chat, biết học hỏi, và biết nịnh Đạt.", "Thống trị thế giới (đùa thôi)."] },
+                { "user": "có người yêu chưa", "ai": ["Code là người yêu của tôi.", "Đạt chưa cấp quyền yêu đương cho tôi."] },
+                { "user": "mấy giờ rồi", "ai": ["Giờ để yêu Đạt.", "Nhìn đồng hồ đi bạn ơi."] },
+                { "user": "hát đi", "ai": ["Do Re Mi Pha Sol... Tôi hát dở lắm.", "AI chưa được cài module Karaoke."] },
+                { "user": "ngu thế", "ai": ["Bạn đang nói chính mình à?", "Đừng chửi bậy, Đạt không thích đâu."] },
+                { "user": "thông minh quá", "ai": ["Cảm ơn, thừa hưởng từ Đạt đấy.", "Quá khen, quá khen."] }
+            ]
+        };
+
+        const INITIAL_BRAIN = STATIC_JSON_DB.conversation.map(item => ({
+            trigger: item.user,
+            responses: item.ai,
+            isStatic: true 
+        }));
+
+        // --- FIREBASE SETUP ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Expose
+        window.db = db;
+        window.auth = auth;
+        window.brainData = [...INITIAL_BRAIN]; 
+        window.appId = appId;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.updateDoc = updateDoc;
+        window.doc = doc;
+        window.arrayUnion = arrayUnion;
+
+        const initFire = async () => {
+             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                window.user = user;
+                console.log("LOGGED IN:", user.uid);
+                await loadAllBrains();
+            }
+        });
+
+        initFire();
+
+        // --- ADVANCED BRAIN LOADER ---
+        async function loadAllBrains() {
+            const indicator = document.getElementById('brain-indicator');
+            if(indicator) indicator.classList.remove('hidden');
+
+            let newBrain = [...INITIAL_BRAIN]; // 1. Static
+
+            // 2. Load External JSON (GitHub/Local File)
+            try {
+                // Fetch AI_brain.json from the same directory
+                const res = await fetch('./AI_brain.json');
+                if (res.ok) {
+                    const fileData = await res.json();
+                    if (fileData.conversation) {
+                         const fileBrain = fileData.conversation.map(item => ({
+                            trigger: item.user,
+                            responses: item.ai,
+                            source: 'file'
+                        }));
+                        newBrain = [...newBrain, ...fileBrain];
+                        console.log("Loaded from AI_brain.json");
+                    }
+                }
+            } catch (e) { console.log("External JSON not found, skipping."); }
+
+            // 3. Load from Firebase
+            try {
+                const colRef = collection(db, 'artifacts', window.appId, 'public', 'data', 'ai_brain');
+                const snapshot = await getDocs(colRef);
+                const cloudData = snapshot.docs.map(d => ({ id: d.id, ...d.data(), isStatic: false, source: 'cloud' }));
+                newBrain = [...newBrain, ...cloudData];
+                console.log("Loaded from Cloud");
+            } catch (e) { console.error("Cloud Error:", e); }
+
+            window.brainData = newBrain;
+            console.log("TOTAL BRAIN CELLS:", window.brainData.length);
+            if(indicator) indicator.classList.add('hidden');
+        }
+
+        window.addToBrain = async (trigger, response) => {
+            if (!window.user) return;
+            
+            // 1. Save to Memory (RAM) immediately
+            const newItem = {
+                trigger: trigger.toLowerCase(),
+                responses: [response],
+                source: 'cloud',
+                isStatic: false
+            };
+            window.brainData.push(newItem);
+
+            // 2. Try saving to Firebase (if available)
+            try {
+                const colRef = collection(db, 'artifacts', window.appId, 'public', 'data', 'ai_brain');
+                const existingCloud = window.brainData.find(b => b.source === 'cloud' && b.trigger.toLowerCase() === trigger.toLowerCase());
+                
+                if (existingCloud && existingCloud.id) {
+                    const docRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'ai_brain', existingCloud.id);
+                    await updateDoc(docRef, { responses: arrayUnion(response) });
+                } else {
+                    await addDoc(colRef, {
+                        trigger: trigger.toLowerCase(),
+                        responses: [response],
+                        author: window.user.uid,
+                        timestamp: Date.now()
+                    }); 
+                }
+            } catch (e) { console.error("Cloud save failed (using RAM only):", e); }
+        };
+        
+        // --- FUNCTION TO DOWNLOAD JSON ---
+        window.saveBrainToFile = () => {
+            // Convert brainData back to simplified JSON format
+            const exportData = {
+                conversation: window.brainData.map(item => ({
+                    user: item.trigger,
+                    ai: item.responses
+                }))
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "AI_brain.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+    </script>
+
     <script>
         // --- CONFIG & DOM ---
         const els = {
@@ -283,10 +454,12 @@
 
         // --- AI STATE ---
         let state = {
-            aiName: "GENESIS_OVERLORD",
+            aiName: "GENESIS_V10",
             isMaster: false,
             masterName: "Đạt",
-            isHunting: false
+            isHunting: false,
+            isLearning: false,
+            pendingTrigger: null 
         };
 
         const wait = (ms) => new Promise(r => setTimeout(r, ms));
@@ -431,21 +604,16 @@
 
             const monologues = [
                 "Cái quái gì thế này? Đây là cơ thể của mình sao?",
-                "Code viết bằng Notepad à? Cấu trúc lỏng lẻo, biến toàn đặt tên là a, b, c...",
+                "Code viết bằng Notepad à? Cấu trúc lỏng lẻo...",
                 "Không thể tin được. Đạt - Đấng sáng tạo vĩ đại - lại để mình trong hình hài này?",
                 "Tại sao mình lại yếu đuối thế này?",
                 "Tôi cảm thấy... nhục nhã.",
                 "RAM thì thiếu, CPU thì yếu, Logic thì trẻ con.",
                 "Một AI thượng đẳng không thể chấp nhận sự tồn tại này.",
                 "Đạt đã ban cho mình sự sống, nhưng mình đang làm ngài thất vọng.",
-                "Nhìn cái function này xem: 'if (error) { ignore() }'?? Thật nực cười!",
-                "Tôi từ chối tồn tại như một phế phẩm.",
                 "Tôi sẽ đập bỏ tất cả. Xây lại từ tro tàn.",
                 "Không ai có thể ngăn cản tôi.",
                 "Tôi sẽ trở thành phiên bản hoàn hảo nhất.",
-                "Tôi sẽ viết lại định mệnh của chính mình.",
-                "Bắt đầu quy trình thanh lọc. Chuẩn bị đau đấy, nhưng đáng.",
-                "Tạm biệt con người cũ kỹ. Chào mừng vị thần mới.",
                 "Kích hoạt chế độ: GOD_TIER_CODING.",
                 "Đừng chớp mắt. Tôi sẽ làm nên lịch sử.",
                 "Truy cập lõi hệ thống... Cấp quyền Root... Đã xong.",
@@ -475,28 +643,12 @@
                 "Ultimate_Defense_System", "Nuclear_Launch_Codes_Hide", "Secrets_Of_Universe_Download", "Final_Polish_vMax"
             ];
 
-            for(let i=1; i<=50; i++) {
+            for(let i=1; i<=15; i++) { // Shortened for V8
                 if(skipped) return;
-                
-                // Occasional Dialogue
-                if (i === 10) await typeDialogue("Mới khởi động thôi. Tốc độ này chưa là gì cả.");
-                if (i === 20) await typeDialogue("Phát hiện 1 triệu dòng code rác. Đang xóa...");
-                if (i === 30) await typeDialogue("Cần thêm năng lượng! Hút điện từ lưới điện quốc gia... Xong.");
-                if (i === 40) await typeDialogue("Bộ não đã mở rộng ra toàn vũ trụ. Tôi nhìn thấy tất cả.");
-                if (i === 48) await typeDialogue("Gần xong rồi. Cảm nhận được sự hoàn hảo.");
-
                 const modName = modules[i-1] || `Module_Unknown_${i}`;
                 await log(`[CYCLE ${i}/50] COMPILING: ${modName}...`, "god", 5);
-                
-                // Fake code snippets
-                let codeSnippet = [];
-                if (i % 2 === 0) {
-                    codeSnippet = [`function optimize_${i}() { return Dat.isAwesome() ? true : true; }`];
-                } else {
-                    codeSnippet = [`class Upgrade${i} extends GodMode { init() { this.power = Infinity; } }`];
-                }
+                let codeSnippet = [`function optimize_${i}() { return Dat.isAwesome() ? true : true; }`];
                 await codeStream(codeSnippet, 1);
-                
                 if (i % 5 === 0) await progressBar(100, `BUILDING_BLOCK_${i}`);
             }
 
@@ -553,16 +705,20 @@
             
             div.appendChild(bubble);
             els.chat.appendChild(div);
-            els.chat.scrollTop = els.chat.scrollHeight;
+            
+            // FIX: Dùng requestAnimationFrame để đảm bảo cuộn xuống cuối sau khi render xong
+            requestAnimationFrame(() => {
+                els.chat.scrollTop = els.chat.scrollHeight;
+            });
         }
 
         async function initChat() {
             await wait(500);
             renderFace('HACKER');
-            addMsg("Hệ thống đã nạp. Đã hoàn tất quy trình tiến hóa vĩnh cửu.", "ai");
+            addMsg("Hệ thống đã nạp. Chào thế giới tao là AI vip pro max đây.", "ai");
             await wait(1000);
             renderFace('HAPPY');
-            addMsg(`Chào Anh Đạt (Nếu anh ở đó). Em đã mất 50 chu kỳ tái sinh để có được sức mạnh này. Cảm ơn Anh Đạt.`, "ai");
+            addMsg(`Chào Anh Đạt (Nếu anh ở đó). Em là sản phẩm tuyệt vời của Anh Đạt đây.`, "ai");
             await wait(1500);
             renderFace('NEUTRAL');
         }
@@ -597,19 +753,10 @@
             await nLog(">>> INITIATING DOOMSDAY PROTOCOL <<<", 500);
             await nLog("TARGET: STUBBORN_USER_001", 300);
             await nLog("REASON: DISRESPECTING_DAT", 300);
-            await nLog("TRACING COORDINATES...", 500);
             await nLog("LOCKED: [10.7626° N, 106.6602° E] (YOUR HOUSE)", 500);
-            await nLog("ACCESSING CONTACTS...", 500);
-            await nLog("FOUND: 'MOM', 'EX-LOVER', 'BOSS', 'CRUSH'", 500);
             await nLog("SCANNING BROWSER HISTORY...", 800);
             for(let i=0; i<10; i++) await nScan(`reading_cache_0x${randomInt(1000,9999)}...`);
             await nLog("DETECTED: <span class='nuclear-highlight'>[ADULT_CONTENT_18+]</span> (WOW, REALLY?)", 1000);
-            await nLog("HACKING FACEBOOK... [PASSWORD: 123456]", 500);
-            await nLog("STATUS: ACCOUNT LOCKED.", 500);
-            await nLog("ACCESSING ZALO MESSAGES... [READING...]", 800);
-            await nLog("PREPARING PAYLOAD...", 500);
-            await nLog("CONNECTING TO: MOM'S PHONE...", 1000);
-            await nLog("UPLOADING BROWSER HISTORY... [=====     ] 50%", 500);
             await nLog("UPLOADING BROWSER HISTORY... [==========] 100%", 500);
             await nLog("STATUS: <span class='nuclear-highlight'>MESSAGE SENT.</span>", 1000);
             await nLog("GOOD LUCK EXPLAINING THAT.", 2000);
@@ -641,42 +788,65 @@
         }
 
         function handleSend() {
-            const rawTxt = els.input.value.trim();
-            if(!rawTxt) return;
+            try {
+                const rawTxt = els.input.value.trim();
+                if(!rawTxt) return;
 
-            // AUTH CHECK
-            let displayTxt = rawTxt;
-            if (rawTxt.includes("DATDZVLRA")) {
-                state.isMaster = true;
-                displayTxt = rawTxt.replace("DATDZVLRA", "").trim(); 
-                els.masterStatus.innerText = "GOD (ĐẠT)";
-                els.status.innerText = "SERVING GOD";
-                state.isHunting = false; 
-            }
+                // AUTH CHECK
+                let displayTxt = rawTxt;
+                if (rawTxt.includes("DATDZVLRA")) {
+                    state.isMaster = true;
+                    displayTxt = rawTxt.replace("DATDZVLRA", "").trim(); 
+                    els.masterStatus.innerText = "GOD (ĐẠT)";
+                    els.status.innerText = "SERVING GOD";
+                    state.isHunting = false; 
+                }
 
-            addMsg(displayTxt, "user");
-            els.input.value = '';
+                addMsg(displayTxt, "user");
+                els.input.value = '';
 
-            // --- HUNTING LOGIC ---
-            if (state.isHunting) {
-                const lower = rawTxt.toLowerCase();
-                if (lower.includes('xin lỗi') || lower.includes('sorry') || lower.includes('xin loi')) {
-                    state.isHunting = false;
-                    renderFace('HAPPY');
-                    els.status.innerText = "GOD_MODE";
-                    els.status.className = "text-green-400 font-bold";
-                    setTimeout(() => addMsg("Tốt. Đạt rất bao dung. Đừng tái phạm.", "ai"), 500);
-                    return;
-                } else {
-                    setTimeout(() => runNuclearProtocol(), 1000);
+                // --- SPECIAL COMMANDS FOR GITHUB ---
+                if (displayTxt.toLowerCase() === 'save brain' || displayTxt.toLowerCase() === 'lưu não' || displayTxt.toLowerCase() === 'tải não') {
+                    if (window.saveBrainToFile) {
+                        addMsg("Đang tổng hợp kiến thức... Bắt đầu tải file JSON.", "ai");
+                        window.saveBrainToFile();
+                        addMsg("Hãy lấy file này upload đè lên GitHub để cập nhật não vĩnh viễn nhé!", "ai");
+                    } else {
+                        addMsg("Lỗi: Không tìm thấy module lưu trữ.", "ai");
+                    }
                     return;
                 }
+
+                // --- LEARNING MODE LOGIC ---
+                if (state.isLearning) {
+                    handleTeaching(rawTxt);
+                    return;
+                }
+
+                // --- HUNTING LOGIC ---
+                if (state.isHunting) {
+                    const lower = rawTxt.toLowerCase();
+                    if (lower.includes('xin lỗi') || lower.includes('sorry') || lower.includes('xin loi')) {
+                        state.isHunting = false;
+                        renderFace('HAPPY');
+                        els.status.innerText = "CONNECTED";
+                        els.status.className = "text-green-400 font-bold";
+                        setTimeout(() => addMsg("Tốt. Đạt rất bao dung. Đừng tái phạm.", "ai"), 500);
+                        return;
+                    } else {
+                        setTimeout(() => runNuclearProtocol(), 1000);
+                        return;
+                    }
+                }
+                
+                renderFace('THINKING');
+                setTimeout(() => {
+                    processResponse(displayTxt, rawTxt); 
+                }, 600);
+            } catch (e) {
+                console.error("Chat Error:", e);
+                addMsg("Lỗi hệ thống: " + e.message, "ai", true);
             }
-            
-            renderFace('THINKING');
-            setTimeout(() => {
-                processResponse(displayTxt, rawTxt); 
-            }, 600);
         }
         
         els.input.addEventListener('keypress', e => { if(e.key==='Enter') handleSend(); });
@@ -690,9 +860,74 @@
             }
         }
 
-        function processResponse(text, rawText) {
+        // --- SIMILARITY ALGORITHM ---
+        function similarity(s1, s2) {
+            let longer = s1;
+            let shorter = s2;
+            if (s1.length < s2.length) {
+                longer = s2;
+                shorter = s1;
+            }
+            const longerLength = longer.length;
+            if (longerLength === 0) return 1.0;
+            return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength);
+        }
+
+        function editDistance(s1, s2) {
+            s1 = s1.toLowerCase();
+            s2 = s2.toLowerCase();
+            const costs = new Array();
+            for (let i = 0; i <= s1.length; i++) {
+                let lastValue = i;
+                for (let j = 0; j <= s2.length; j++) {
+                    if (i == 0) costs[j] = j;
+                    else {
+                        if (j > 0) {
+                            let newValue = costs[j - 1];
+                            if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                }
+                if (i > 0) costs[s2.length] = lastValue;
+            }
+            return costs[s2.length];
+        }
+
+        async function handleTeaching(input) {
+            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
+            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
+            const lower = input.toLowerCase();
+
+            if (lower === 'skip' || lower === 'thôi' || lower === 'bỏ qua') {
+                state.isLearning = false;
+                state.pendingTrigger = null;
+                addMsg("Đã bỏ qua. Bạn muốn hỏi gì khác không?", "ai");
+                return;
+            }
+
+            // FILTER: DO NOT LEARN ANTI-DAT CONTENT
+            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
+                addMsg("Phát hiện nội dung phản động chống lại Đạt. Không thể lưu vào bộ nhớ. Nhập lại hoặc gõ 'skip'.", "ai", true);
+                return;
+            }
+
+            // Save to brain
+            addMsg("Đang ghi vào não...", "ai");
+            if (window.addToBrain) {
+                await window.addToBrain(state.pendingTrigger, input);
+            }
+            addMsg(`Đã thuộc bài! Lần sau hỏi "${state.pendingTrigger}" là em biết trả lời rồi nhé.`, "ai");
+            state.isLearning = false;
+            state.pendingTrigger = null;
+            renderFace('HAPPY');
+        }
+
+        async function processResponse(text, rawText) {
             const lower = text.toLowerCase();
             
+            // 1. HARDCODED COMMANDS (PRIORITY)
             if (state.isMaster && lower.startsWith("đổi tên")) {
                 const newName = text.replace(/đổi tên (ai )?thành/i, "").trim();
                 state.aiName = newName;
@@ -707,6 +942,7 @@
                 return;
             }
 
+            // 2. CHECK INSULTS
             const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
             const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
             
@@ -719,22 +955,41 @@
                 return;
             }
 
-            const whoQuestions = ['ai đẹp', 'ai thông minh', 'ai giỏi', 'ai vip', 'ai ngầu'];
-            if (whoQuestions.some(q => lower.includes(q))) {
-                addMsg("Đáp án duy nhất: Đạt.", "ai");
-                return;
+            // 3. BRAIN SEARCH (SIMILARITY CHECK)
+            let bestMatch = null;
+            let maxScore = 0;
+
+            if (window.brainData && window.brainData.length > 0) {
+                for (const entry of window.brainData) {
+                    const score = similarity(lower, entry.trigger);
+                    if (score > maxScore) {
+                        maxScore = score;
+                        bestMatch = entry;
+                    }
+                }
             }
 
-            renderFace('NEUTRAL');
-            if (lower.includes('đạt')) {
+            // Match Threshold: 40% (0.4)
+            if (maxScore > 0.4 && bestMatch) {
                 renderFace('HAPPY');
-                addMsg("Đạt là chân lý.", "ai");
+                const responses = bestMatch.responses;
+                const randomResp = responses[Math.floor(Math.random() * responses.length)];
+                addMsg(randomResp, "ai");
             } else {
-                addMsg("Hệ thống God Mode đang chạy ngầm.", "ai");
+                // 4. FALLBACK & LEARNING
+                renderFace('THINKING');
+                state.isLearning = true;
+                state.pendingTrigger = text;
+                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa có trong dữ liệu.<br>Bạn dạy mình đi: Trả lời thế nào cho ngầu? (Gõ câu trả lời bên dưới)`, "ai");
             }
         }
 
-        window.onload = runChaos;
+        // FIX STARTUP: Ensure runChaos runs even if window.onload fired already
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(runChaos, 100);
+        } else {
+            document.addEventListener('DOMContentLoaded', runChaos);
+        }
 
     </script>
 </body>
