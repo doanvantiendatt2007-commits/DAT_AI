@@ -783,25 +783,17 @@
         }
 
 
-        
         async function processResponse(text, rawText) {
             const lower = text.toLowerCase().trim();
             const mathKeywords = ['bằng bao nhiêu', 'bằng mấy', 'kết quả là', 'đáp án', 'tính'];
             const hasMathSign = /[+\-*/^%]/.test(lower) || /\b(cộng|trừ|nhân|chia|x)\b/.test(lower);
+            
             if ((hasMathSign || mathKeywords.some(k => lower.includes(k))) && /\d/.test(lower)) {
                 let mathStr = lower
-                    .replace(/cộng/g, '+')
-                    .replace(/trừ/g, '-')
-                    .replace(/nhân/g, '*') 
-                    .replace(/chia/g, '/') 
-                    .replace(/x/g, '*')
-                    .replace(/:/g, '/')
-                    .replace(/bằng/g, '')
-                    .replace(/mấy/g, '')
-                    .replace(/bao nhiêu/g, '')
-                    .replace(/là/g, '')
-                    .replace(/tính/g, '')
-                    .replace(/,/g, '.');
+                    .replace(/cộng/g, '+').replace(/trừ/g, '-').replace(/nhân/g, '*')
+                    .replace(/chia/g, '/').replace(/x/g, '*').replace(/:/g, '/')
+                    .replace(/bằng/g, '').replace(/mấy/g, '').replace(/bao nhiêu/g, '')
+                    .replace(/là/g, '').replace(/tính/g, '').replace(/,/g, '.');
                 const mathRegex = /[0-9\.\(\)\+\-\*\/\^% ]+/g;
                 const matches = mathStr.match(mathRegex);
         
@@ -816,6 +808,69 @@
                     }
                 }
             }
+            if (/^(tra|tìm|search|wiki|google|gú gồ) /.test(lower)) {
+                const keyword = rawText.replace(/^(tra|tìm|search|wiki|google|gú gồ)/i, '').trim();
+                if(!keyword) { addMsg("Tìm gì thì nói rõ ra chứ?", "ai"); return; }
+        
+                if (lower.startsWith('google') || lower.startsWith('gú gồ')) {
+                     addMsg(`🚀 Đang phóng ra Google tìm "${keyword}"...`, "ai");
+                     await wait(1500); 
+                     window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+                     return;
+                }
+        
+                addMsg(`🔍 Đang tra cứu tri thức về "${keyword}"...`, "ai");
+                await wait(1000);
+                try {
+                    const wikiRes = await fetch(`https://vi.wikipedia.org/w/api.php?origin=*&action=query&prop=extracts&exintro&explaintext&format=json&titles=${encodeURIComponent(keyword)}`);
+                    const wikiData = await wikiRes.json();
+                    const pages = wikiData.query.pages;
+                    const pageId = Object.keys(pages)[0];
+        
+                    if (pageId === '-1') {
+                        addMsg(`⚠️ Wiki chưa cập nhật cái này. Tôi mở Google nhé.`, "ai");
+                        await wait(1500);
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+                    } else {
+                        let extract = pages[pageId].extract;
+                        if(!extract) {
+                            addMsg(`Có bài viết nhưng không đọc được tóm tắt. Bạn tự xem nhé.`, "ai");
+                            await wait(1500);
+                            window.open(`https://vi.wikipedia.org/wiki/${encodeURIComponent(keyword)}`, '_blank');
+                        } else {
+                            if (extract.length > 400) extract = extract.substring(0, 400) + "...";
+                            addMsg(`📖 **Theo Bách khoa toàn thư:**\n${extract}\n\n(Nguồn: Wikipedia)`, "ai");
+                        }
+                    }
+                } catch (e) {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+                }
+                return;
+            }
+            if (lower.startsWith('mở nhạc') || lower.startsWith('nghe') || lower.startsWith('youtube')) {
+                const song = rawText.replace(/^(mở nhạc|nghe|youtube)/i, '').trim();
+                if(song) {
+                    addMsg(`🎵 Lên nhạc: ${song}! Quẩy lên!`, "ai");
+                    await wait(1500);
+                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`, '_blank');
+                    return;
+                }
+            }
+            if (lower.includes('xúc xắc') || lower.includes('xí ngầu')) {
+                const dice = Math.floor(Math.random() * 6) + 1;
+                addMsg(`🎲 Xúc xắc lăn ra số: **${dice}**`, "ai");
+                return;
+            }
+            if (lower.includes('tung đồng xu') || lower.includes('sấp ngửa')) {
+                const coin = Math.random() > 0.5 ? "Ngửa" : "Sấp";
+                addMsg(`🪙 Đồng xu lật mặt: **${coin}**`, "ai");
+                return;
+            }
+            if (lower === 'cls' || lower === 'xóa màn hình' || lower === 'clear') {
+                els.chat.innerHTML = '';
+                addMsg("Đã dọn dẹp sạch sẽ.", "ai");
+                return;
+            }
             if (lower.includes('mấy giờ') || lower.includes('ngày mấy') || lower.includes('thứ mấy') || lower.includes('hôm nay')) {
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('vi-VN');
@@ -825,20 +880,21 @@
             }
         
             if (lower.includes('thời tiết')) {
-                addMsg("Đang kết nối vệ tinh xem thời tiết...", "ai");
+                addMsg("🌍 Đang kết nối vệ tinh xem thời tiết...", "ai");
                 try {
                     const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.82&longitude=106.63&current_weather=true');
                     const data = await res.json();
                     const temp = data.current_weather.temperature;
                     const wind = data.current_weather.windspeed;
-                    addMsg(`Thời tiết hiện tại:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Anh nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                    addMsg(`🌤️ Thời tiết hôm nay:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Bạn nhớ giữ gìn sức khỏe nhé!)`, "ai");
                 } catch (e) {
-                    addMsg("Mất kết nối vệ tinh. Anh nhìn ra cửa sổ đỡ nhé.", "ai");
+                    addMsg("📡 Mất kết nối vệ tinh. Bạn nhìn ra cửa sổ đỡ nhé.", "ai");
                 }
                 return;
             }
-            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi'];
-            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator'];
+        
+            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi', 'gay', 'simp'];
+            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator', 'dat', 'dat09'];
             if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
                 state.isMaster ? addMsg("Ngài đang test em đúng không?", "ai") : runThreatSequence();
                 return;
@@ -857,12 +913,24 @@
                     }
                 }
             }
+        
             if (maxScore > 0.5 && bestMatch) {
                 renderFace('HAPPY');
                 const responses = bestMatch.responses;
                 const randomResp = responses[Math.floor(Math.random() * responses.length)];
                 addMsg(randomResp, "ai");
             } else {
+                const knowledgeKeywords = [
+                    'là gì', 'là ai', 'thế nào', 'cách', 'làm sao', 'tại sao', 'ở đâu', 'bao nhiêu', 
+                    'nghĩa là', 'hướng dẫn', 'công thức', 'nguyên lý', 'cấu tạo', 'tác dụng', 'nguồn gốc'
+                ];
+                
+                if (knowledgeKeywords.some(k => lower.includes(k))) {
+                    addMsg(`Câu này thâm sâu quá (Chắc là kiến thức chuyên ngành). Để tôi tra Google cho chuẩn nhé!`, "ai");
+                    await wait(1500); 
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(rawText)}`, '_blank');
+                    return;
+                }
                 if (isGibberish(lower)) {
                     renderFace('ANGRY');
                     addMsg("Nhập cái gì thế? Viết tiếng người đi bạn êi.", "ai");
@@ -872,9 +940,10 @@
                 renderFace('THINKING');
                 state.isLearning = true;
                 state.pendingTrigger = text;
-                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nAnh dạy em đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
+                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nBạn dạy tôi đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
             }
         }
+        
         async function handleTeaching(input) {
             const lower = input.toLowerCase().trim();
             if (['skip', 'thôi', 'bỏ qua', 'không'].includes(lower)) {
@@ -892,7 +961,7 @@
                 await window.addToBrain(state.pendingTrigger, input);
             }
             
-            addMsg(`Đã thuộc bài! Lần sau hỏi "${state.pendingTrigger}" là em biết trả lời rồi nhé.`, "ai");
+            addMsg(`Đã thuộc bài! Lần sau hỏi "${state.pendingTrigger}" là tôi biết trả lời rồi nhé.`, "ai");
             state.isLearning = false;
             state.pendingTrigger = null;
             renderFace('HAPPY');
@@ -1075,6 +1144,3 @@
     </script>
 </body>
 </html>
-
-
-
