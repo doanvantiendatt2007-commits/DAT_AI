@@ -1,0 +1,45 @@
+# Tên của quy trình
+name: Deploy AI Dep Zai to Pages
+
+on:
+  # Chạy khi có code mới đẩy lên nhánh main
+  push:
+    branches: ["main"]
+
+  # Cho phép chạy thủ công từ tab Actions
+  workflow_dispatch:
+
+# Cấp quyền cho GITHUB_TOKEN để deploy lên Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Chỉ cho phép 1 lần deploy chạy tại 1 thời điểm
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Job deploy
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload toàn bộ thư mục hiện tại (bao gồm html và json)
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
