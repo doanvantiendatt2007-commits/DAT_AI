@@ -29,6 +29,20 @@
             font-family: 'Fira Code', monospace;
             color: var(--terminal-text);
         }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
 
         /* --- STAGE 1: CHAOS & VOID --- */
         .ruin-layer {
@@ -286,30 +300,39 @@
             
             <div class="max-w-4xl mx-auto relative">
                 
-                <div id="tools-menu" class="hidden absolute bottom-full left-0 mb-3 w-64 bg-[#1e1e1e]/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden font-sans z-[100] transform transition-all origin-bottom-left">
-                    <div class="p-3 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-gray-700/50">
+                <div id="tools-menu" class="hidden 
+                    /* Mobile Styles: Cố định, rộng theo màn hình, nằm trên thanh chat */
+                    fixed bottom-[80px] left-4 right-4 z-[100] max-h-[60vh] overflow-y-auto
+                    
+                    /* PC Styles (md): Trở về dạng popover nhỏ gọn dính theo nút */
+                    md:absolute md:bottom-full md:left-0 md:right-auto md:mb-3 md:w-64 md:max-h-none
+                    
+                    /* Common Styles */
+                    bg-[#1e1e1e]/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl font-sans transform transition-all origin-bottom-left custom-scrollbar">
+                    
+                    <div class="p-3 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-gray-700/50 sticky top-0 bg-[#1e1e1e]/95 z-10">
                         Chọn chế độ
                     </div>
                     
                     <div class="p-2 space-y-1">
-                        <button onclick="setMode('chat')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-cyan-400 group">
-                            <span class="bg-cyan-900/30 p-1.5 rounded-md group-hover:bg-cyan-500 group-hover:text-black transition-all">💬</span> 
+                        <button onclick="setMode('chat')" class="w-full text-left px-3 py-3 md:py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-cyan-400 group">
+                            <span class="bg-cyan-900/30 p-2 md:p-1.5 rounded-md group-hover:bg-cyan-500 group-hover:text-black transition-all text-lg md:text-base">💬</span> 
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium text-gray-200">Nói chuyện</span>
                                 <span class="text-[10px] text-gray-500">Chat bình thường</span>
                             </div>
                         </button>
 
-                        <button onclick="setMode('expert')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-yellow-400 group">
-                            <span class="bg-yellow-900/30 p-1.5 rounded-md group-hover:bg-yellow-500 group-hover:text-black transition-all">🎓</span> 
+                        <button onclick="setMode('expert')" class="w-full text-left px-3 py-3 md:py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-yellow-400 group">
+                            <span class="bg-yellow-900/30 p-2 md:p-1.5 rounded-md group-hover:bg-yellow-500 group-hover:text-black transition-all text-lg md:text-base">🎓</span> 
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium text-gray-200">Chuyên gia</span>
                                 <span class="text-[10px] text-gray-500">Tra cứu Wiki / Google</span>
                             </div>
                         </button>
 
-                        <button onclick="setMode('entertainment')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-pink-400 group">
-                            <span class="bg-pink-900/30 p-1.5 rounded-md group-hover:bg-pink-500 group-hover:text-black transition-all">🎬</span> 
+                        <button onclick="setMode('entertainment')" class="w-full text-left px-3 py-3 md:py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-pink-400 group">
+                            <span class="bg-pink-900/30 p-2 md:p-1.5 rounded-md group-hover:bg-pink-500 group-hover:text-black transition-all text-lg md:text-base">🎬</span> 
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium text-gray-200">Giải trí</span>
                                 <span class="text-[10px] text-gray-500">Xem YouTube / Video</span>
@@ -318,8 +341,8 @@
                         
                         <div class="h-[1px] bg-gray-700/50 my-1 mx-2"></div>
                         
-                        <button onclick="openTrainingModal()" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-green-400 group">
-                            <span class="bg-green-900/30 p-1.5 rounded-md group-hover:bg-green-500 group-hover:text-black transition-all">🧠</span> 
+                        <button onclick="openTrainingModal()" class="w-full text-left px-3 py-3 md:py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-green-400 group">
+                            <span class="bg-green-900/30 p-2 md:p-1.5 rounded-md group-hover:bg-green-500 group-hover:text-black transition-all text-lg md:text-base">🧠</span> 
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium text-gray-200">Huấn luyện</span>
                                 <span class="text-[10px] text-gray-500">Dạy AI khôn hơn</span>
@@ -328,8 +351,8 @@
 
                         <div class="h-[1px] bg-gray-700/50 my-1 mx-2"></div>
 
-                        <button onclick="openProfileModal()" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-orange-400 group">
-                            <span class="bg-orange-900/30 p-1.5 rounded-md group-hover:bg-orange-500 group-hover:text-black transition-all">🆔</span> 
+                        <button onclick="openProfileModal()" class="w-full text-left px-3 py-3 md:py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-orange-400 group">
+                            <span class="bg-orange-900/30 p-2 md:p-1.5 rounded-md group-hover:bg-orange-500 group-hover:text-black transition-all text-lg md:text-base">🆔</span> 
                             <div class="flex flex-col">
                                 <span class="text-sm font-medium text-gray-200">Hồ sơ cá nhân</span>
                                 <span class="text-[10px] text-gray-500">Xem ID / Đổi tên</span>
@@ -359,75 +382,75 @@
                 </div>
             </div>
         </footer>
-        <div id="training-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex-col items-center justify-center p-4 font-mono backdrop-blur-sm">
-            <div class="bg-[#0a0a0a] border border-green-500/30 p-6 rounded-2xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,255,0,0.15)] relative overflow-hidden">
+        <div id="training-modal" class="fixed inset-0 bg-black/95 z-[100] hidden items-center justify-center p-4 font-mono backdrop-blur-sm transition-all">
+            <div class="bg-[#0a0a0a] border border-green-500/30 w-full max-w-4xl shadow-[0_0_50px_rgba(0,255,0,0.15)] relative overflow-hidden rounded-2xl flex flex-col max-h-[90vh]">
                 
                 <div class="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
 
-                <div class="relative z-10 mb-6 text-center border-b border-green-900/50 pb-4">
-                    <h2 class="text-green-400 text-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3">
-                        <span class="text-3xl">🧠</span> NẠP KIẾN THỨC
+                <div class="relative z-10 text-center border-b border-green-900/50 p-4 pb-2 flex-shrink-0 bg-[#0a0a0a]/90 backdrop-blur">
+                    <h2 class="text-green-400 text-xl md:text-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3">
+                        <span class="text-2xl md:text-3xl">🧠</span> NẠP KIẾN THỨC
                     </h2>
-                    <p class="text-gray-500 text-xs mt-2 font-sans">
-                        Nhập nhiều cách hỏi khác nhau cho cùng 1 ý -> AI sẽ học hết và trả lời linh hoạt.
+                    <p class="text-gray-500 text-[10px] md:text-xs mt-1 font-sans">
+                        Nhập nhiều cách hỏi khác nhau -> AI trả lời linh hoạt.
                     </p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                    
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between text-cyan-400 font-bold text-xs uppercase border-b border-cyan-900/50 pb-2 mb-2">
-                            <span class="flex items-center gap-2"><span class="bg-cyan-900/20 p-1 rounded">👤</span> User nói (Đồng nghĩa)</span>
-                            <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Nhập tối đa 3 cách hỏi</span>
-                        </div>
+                <div class="relative z-10 flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
-                            <input id="t-in-1" placeholder="VD: Chào em (Câu chính)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                        <div class="space-y-3">
+                            <div class="sticky top-0 bg-[#0a0a0a] z-20 py-2 flex items-center justify-between text-cyan-400 font-bold text-xs uppercase border-b border-cyan-900/50 mb-2">
+                                <span class="flex items-center gap-2"><span class="bg-cyan-900/20 p-1 rounded">👤</span> User nói</span>
+                                <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Max 3</span>
+                            </div>
+                            
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
+                                <input id="t-in-1" placeholder="VD: Chào em" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                            </div>
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
+                                <input id="t-in-2" placeholder="VD: Hello" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                            </div>
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
+                                <input id="t-in-3" placeholder="VD: Hi babe" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                            </div>
                         </div>
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
-                            <input id="t-in-2" placeholder="VD: Hello (Đồng nghĩa 1)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
-                        </div>
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
-                            <input id="t-in-3" placeholder="VD: Hi babe (Đồng nghĩa 2)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+
+                        <div class="space-y-3 relative">
+                            <div class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 justify-center items-center w-8 h-8 bg-[#0a0a0a] border border-green-500/30 rounded-full text-green-500 z-20 shadow-lg">➜</div>
+
+                            <div class="sticky top-0 bg-[#0a0a0a] z-20 py-2 flex items-center justify-between text-green-400 font-bold text-xs uppercase border-b border-green-900/50 mb-2 md:pl-4">
+                                <span class="flex items-center gap-2"><span class="bg-green-900/20 p-1 rounded">🤖</span> AI đáp</span>
+                                <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Random</span>
+                            </div>
+
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
+                                <input id="t-out-1" placeholder="VD: Chào đại ca" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                            </div>
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
+                                <input id="t-out-2" placeholder="VD: Dạ em nghe" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                            </div>
+                            <div class="group relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
+                                <input id="t-out-3" placeholder="VD: Hello sếp" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                            </div>
                         </div>
                     </div>
-
-                    <div class="space-y-3 relative">
-                        <div class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 justify-center items-center w-8 h-8 bg-[#0a0a0a] border border-green-500/30 rounded-full text-green-500 z-20 shadow-lg">
-                            ➜
-                        </div>
-
-                        <div class="flex items-center justify-between text-green-400 font-bold text-xs uppercase border-b border-green-900/50 pb-2 mb-2 md:pl-4">
-                            <span class="flex items-center gap-2"><span class="bg-green-900/20 p-1 rounded">🤖</span> AI đáp (Biến thể)</span>
-                            <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Random 1 trong các câu</span>
-                        </div>
-
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
-                            <input id="t-out-1" placeholder="VD: Chào đại ca (Đáp án 1)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
-                        </div>
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
-                            <input id="t-out-2" placeholder="VD: Dạ em nghe (Đáp án 2)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
-                        </div>
-                        <div class="group relative">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
-                            <input id="t-out-3" placeholder="VD: Hello sếp (Đáp án 3)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
-                        </div>
-                    </div>
+                    
+                    <div id="train-msg" class="text-xs mt-4 min-h-[20px] text-red-400 font-bold text-center"></div>
                 </div>
 
-                <div id="train-msg" class="text-xs mt-6 h-5 text-red-400 font-bold text-center relative z-10"></div>
-
-                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800 relative z-10">
+                <div class="relative z-10 flex justify-end gap-3 p-4 border-t border-gray-800 bg-[#0a0a0a]/90 backdrop-blur flex-shrink-0">
                     <button onclick="closeTrainingModal()" class="px-5 py-2.5 text-gray-500 hover:text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-white/5 transition-all">
-                        Hủy bỏ
+                        Hủy
                     </button>
-                    <button onclick="submitTraining()" class="px-8 py-2.5 bg-green-600 hover:bg-green-500 text-black rounded-lg shadow-[0_0_20px_rgba(0,255,0,0.4)] hover:shadow-[0_0_30px_rgba(0,255,0,0.6)] text-xs font-black transition-all uppercase tracking-wider flex items-center gap-2">
-                        <span>⚡</span> Nạp dữ liệu
+                    <button onclick="submitTraining()" class="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-black rounded-lg shadow-[0_0_20px_rgba(0,255,0,0.4)] hover:shadow-[0_0_30px_rgba(0,255,0,0.6)] text-xs font-black transition-all uppercase tracking-wider flex items-center gap-2">
+                        <span>⚡</span> Nạp
                     </button>
                 </div>
             </div>
@@ -460,24 +483,25 @@
         </div>
     </div>
     
-    <div id="profile-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex-col items-center justify-center p-4 font-mono backdrop-blur-sm">
-        <div class="bg-[#0a0a0a] border border-orange-500/30 p-6 rounded-2xl w-full max-w-md shadow-[0_0_50px_rgba(255,165,0,0.15)] relative overflow-hidden">
+    <div id="profile-modal" class="fixed inset-0 bg-black/95 z-[100] hidden items-center justify-center p-4 font-mono backdrop-blur-sm transition-all">
+        
+        <div class="bg-[#0a0a0a] border border-orange-500/30 w-full max-w-md shadow-[0_0_50px_rgba(255,165,0,0.15)] relative overflow-hidden rounded-2xl flex flex-col max-h-[90vh]">
             
             <div class="absolute inset-0 bg-[linear-gradient(rgba(255,165,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,165,0,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
 
-            <div class="relative z-10 mb-6 text-center border-b border-orange-900/50 pb-4">
+            <div class="relative z-10 text-center border-b border-orange-900/50 p-4 pb-3 flex-shrink-0 bg-[#0a0a0a]">
                 <h2 class="text-orange-400 text-xl font-black uppercase tracking-widest flex items-center justify-center gap-2">
                     <span>🆔</span> IDENTITY CARD
                 </h2>
             </div>
             
-            <div class="space-y-4 relative z-10">
+            <div class="relative z-10 flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                 
                 <div class="group">
                     <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">User ID (Author ID) - <span class="text-red-500">LOCKED</span></label>
                     <div class="relative">
                         <input id="profile-id-input" readonly 
-                            class="w-full bg-gray-900/50 border border-gray-800 text-gray-400 px-3 py-2 text-xs rounded font-mono cursor-not-allowed select-all focus:outline-none">
+                            class="w-full bg-gray-900/50 border border-gray-800 text-gray-400 px-3 py-3 text-xs rounded font-mono cursor-not-allowed select-all focus:outline-none">
                         <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-600">READ-ONLY</div>
                     </div>
                 </div>
@@ -485,18 +509,22 @@
                 <div class="group">
                     <label class="text-[10px] text-orange-400 font-bold uppercase block mb-1">Display Name (Tên hiển thị)</label>
                     <input id="profile-name-input" type="text"
-                        class="w-full bg-black/40 border border-orange-900/50 focus:border-orange-500 text-orange-100 px-3 py-2 text-sm rounded outline-none transition-all placeholder-gray-700 focus:bg-orange-900/5 focus:shadow-[0_0_15px_rgba(255,165,0,0.2)]"
+                        class="w-full bg-black/40 border border-orange-900/50 focus:border-orange-500 text-orange-100 px-3 py-3 text-sm rounded outline-none transition-all placeholder-gray-700 focus:bg-orange-900/5 focus:shadow-[0_0_15px_rgba(255,165,0,0.2)]"
                         placeholder="Nhập tên mới...">
+                </div>
+
+                <div class="text-[10px] text-gray-600 italic mt-2">
+                    *Tên này sẽ được AI gọi khi giao tiếp.
                 </div>
 
             </div>
 
-            <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-800 relative z-10">
+            <div class="relative z-10 flex justify-end gap-3 p-4 border-t border-gray-800 flex-shrink-0 bg-[#0a0a0a]">
                 <button onclick="closeProfileModal()" class="px-4 py-2 text-gray-500 hover:text-white text-xs font-bold uppercase rounded hover:bg-white/5 transition-all">
                     Đóng
                 </button>
                 <button onclick="saveProfileChanges()" class="px-6 py-2 bg-orange-600 hover:bg-orange-500 text-black rounded shadow-[0_0_20px_rgba(255,165,0,0.4)] hover:shadow-[0_0_30px_rgba(255,165,0,0.6)] text-xs font-black transition-all uppercase flex items-center gap-2">
-                    <span>💾</span> Lưu Hồ Sơ
+                    <span>💾</span> Lưu
                 </button>
             </div>
         </div>
