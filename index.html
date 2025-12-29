@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAT AI VIP PRO MAX</title>
+    <title>DAT AI VIP PRO MAX - CONTEXT UPGRADE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -176,7 +176,6 @@
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
 
-        /* FIX: Bỏ opacity: 0 mặc định để tránh tin nhắn bị tàng hình nếu animation lỗi */
         .msg-enter { animation: slideUp 0.3s ease-out forwards; transform: translateY(10px); }
         @keyframes slideUp { 
             0% { opacity: 0; transform: translateY(10px); }
@@ -206,36 +205,60 @@
             content: '█';
             animation: blink 1s infinite;
         }
+        #user-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            font-size: 16px;
+            line-height: 1.5;
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            resize: none;
+            overflow-y: hidden;
+            max-height: 94px;
+        }
         @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0;} }
 
-        /* Brain Loader */
-        .brain-loader { font-size: 10px; color: #fbbf24; display: inline-block; animation: pulse 1s infinite; }
+        /* --- CONFIRMATION BOX STYLES --- */
+        .confirm-box {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(0, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .confirm-title { font-size: 11px; color: #fbbf24; font-style: italic; }
+        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+        .confirm-btn {
+            padding: 4px 12px; font-size: 10px; border-radius: 4px; border: none; cursor: pointer;
+            font-family: 'Orbitron', sans-serif; font-weight: bold; transition: all 0.2s;
+        }
+        .btn-yes { background: rgba(0, 255, 0, 0.2); color: #4ade80; border: 1px solid #22c55e; }
+        .btn-yes:hover { background: rgba(0, 255, 0, 0.4); }
+        .btn-no { background: rgba(255, 0, 0, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .btn-no:hover { background: rgba(255, 0, 0, 0.4); }
+
     </style>
 </head>
 <body>
 
-    <!-- Skip Button -->
     <button id="skip-btn" onclick="skipIntro()">[SKIP INTRO]</button>
 
-    <!-- STAGE 1: CHAOS -->
     <div id="ruin-screen" class="ruin-layer">
         <div id="binary-bg" class="binary-stream"></div>
         <h1 class="text-6xl font-black text-gray-800 tracking-tighter mb-4 glitch-text">NULL_POINTER</h1>
         <div id="chaos-log" class="text-xs text-green-900 font-mono text-center"></div>
     </div>
 
-    <!-- STAGE 2: TERMINAL -->
     <div id="terminal-screen" class="terminal-layer">
         <div id="terminal-output"></div>
     </div>
 
-    <!-- STAGE 3: UI -->
     <div id="ui-screen" class="ui-layer">
         <div class="scanline"></div>
-        <!-- HEADER -->
         <header class="glass-panel h-20 flex items-center justify-between px-4 z-10 border-b border-cyan-900/30">
             <div class="flex items-center gap-4">
-                <!-- BIT FACE AVATAR -->
                 <div id="ai-avatar" class="bit-face-container rounded"></div>
                 <div>
                     <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">PNHI</h1>
@@ -252,25 +275,175 @@
             </div>
         </header>
 
-        <!-- CHAT -->
-        <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 font-mono custom-scrollbar"></main>
+        <main id="chat-container" class="flex-1 overflow-y-auto p-4 pb-32 space-y-4 font-mono custom-scrollbar"></main>
 
-        <!-- INPUT -->
-        <footer class="p-4 z-10">
-            <div class="glass-panel rounded-lg p-2 flex gap-2 items-end max-w-4xl mx-auto border border-cyan-500/30">
-                <span class="text-cyan-500 pl-2 pb-2 animate-pulse">></span>
-                <textarea id="user-input" rows="1"
-                    class="flex-1 bg-transparent border-none text-cyan-100 focus:outline-none font-mono text-sm placeholder-cyan-900 resize-none overflow-hidden py-2"
-                    placeholder="Nhập lệnh..." autocomplete="off"></textarea>
-                <button onclick="handleSend()" 
-                    class="px-4 py-2 bg-cyan-900/40 hover:bg-cyan-500/30 text-cyan-400 text-xs font-bold border border-cyan-500/30 rounded transition-all uppercase mb-0.5">
-                    GỬI
-                </button>
+        <footer class="p-4 z-50 fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent">
+            
+            <div class="max-w-4xl mx-auto relative">
+                
+                <div id="tools-menu" class="hidden absolute bottom-full left-0 mb-3 w-64 bg-[#1e1e1e]/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl overflow-hidden font-sans z-[100] transform transition-all origin-bottom-left">
+                    <div class="p-3 text-[10px] text-gray-500 font-bold uppercase tracking-wider border-b border-gray-700/50">
+                        Chọn chế độ
+                    </div>
+                    
+                    <div class="p-2 space-y-1">
+                        <button onclick="setMode('chat')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-cyan-400 group">
+                            <span class="bg-cyan-900/30 p-1.5 rounded-md group-hover:bg-cyan-500 group-hover:text-black transition-all">💬</span> 
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-gray-200">Nói chuyện</span>
+                                <span class="text-[10px] text-gray-500">Chat bình thường</span>
+                            </div>
+                        </button>
+
+                        <button onclick="setMode('expert')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-yellow-400 group">
+                            <span class="bg-yellow-900/30 p-1.5 rounded-md group-hover:bg-yellow-500 group-hover:text-black transition-all">🎓</span> 
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-gray-200">Chuyên gia</span>
+                                <span class="text-[10px] text-gray-500">Tra cứu Wiki / Google</span>
+                            </div>
+                        </button>
+
+                        <button onclick="setMode('entertainment')" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-pink-400 group">
+                            <span class="bg-pink-900/30 p-1.5 rounded-md group-hover:bg-pink-500 group-hover:text-black transition-all">🎬</span> 
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-gray-200">Giải trí</span>
+                                <span class="text-[10px] text-gray-500">Xem YouTube / Video</span>
+                            </div>
+                        </button>
+                        
+                        <div class="h-[1px] bg-gray-700/50 my-1 mx-2"></div>
+                        
+                        <button onclick="openTrainingModal()" class="w-full text-left px-3 py-2.5 hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors text-green-400 group">
+                            <span class="bg-green-900/30 p-1.5 rounded-md group-hover:bg-green-500 group-hover:text-black transition-all">🧠</span> 
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-gray-200">Huấn luyện</span>
+                                <span class="text-[10px] text-gray-500">Dạy AI khôn hơn</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    
+                    <button id="current-mode-btn" onclick="toggleTools()" 
+                        class="flex-shrink-0 flex items-center gap-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] text-cyan-400 pl-2 pr-4 py-2 rounded-full transition-all border border-gray-700/50 group h-[52px] shadow-lg">
+                        </button>
+
+                    <div class="flex-1 bg-[#1e1e1e] rounded-[24px] border border-gray-700/50 flex items-end p-2 focus-within:border-gray-500 focus-within:bg-[#252525] transition-all relative shadow-lg">
+                        
+                        <textarea id="user-input" rows="1"
+                            class="flex-1 bg-transparent border-none text-gray-100 focus:outline-none font-mono text-sm placeholder-gray-500 resize-none overflow-hidden py-3 px-4 max-h-[150px]"
+                            placeholder="Nhập tin nhắn..." autocomplete="off"></textarea>
+                            
+                        <button onclick="handleSend()" 
+                            class="p-2 mb-1 mr-1 bg-white text-black hover:bg-cyan-400 rounded-full transition-all shadow-lg flex items-center justify-center w-8 h-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+
+                </div>
             </div>
         </footer>
-    </div>
+        <div id="training-modal" class="fixed inset-0 bg-black/95 z-[100] hidden flex-col items-center justify-center p-4 font-mono backdrop-blur-sm">
+            <div class="bg-[#0a0a0a] border border-green-500/30 p-6 rounded-2xl w-full max-w-4xl shadow-[0_0_50px_rgba(0,255,0,0.15)] relative overflow-hidden">
+                
+                <div class="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
 
-    <!-- STAGE 4: NUCLEAR DOOMSDAY -->
+                <div class="relative z-10 mb-6 text-center border-b border-green-900/50 pb-4">
+                    <h2 class="text-green-400 text-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3">
+                        <span class="text-3xl">🧠</span> NẠP KIẾN THỨC
+                    </h2>
+                    <p class="text-gray-500 text-xs mt-2 font-sans">
+                        Nhập nhiều cách hỏi khác nhau cho cùng 1 ý -> AI sẽ học hết và trả lời linh hoạt.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-cyan-400 font-bold text-xs uppercase border-b border-cyan-900/50 pb-2 mb-2">
+                            <span class="flex items-center gap-2"><span class="bg-cyan-900/20 p-1 rounded">👤</span> User nói (Đồng nghĩa)</span>
+                            <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Nhập tối đa 3 cách hỏi</span>
+                        </div>
+                        
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
+                            <input id="t-in-1" placeholder="VD: Chào em (Câu chính)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                        </div>
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
+                            <input id="t-in-2" placeholder="VD: Hello (Đồng nghĩa 1)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                        </div>
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
+                            <input id="t-in-3" placeholder="VD: Hi babe (Đồng nghĩa 2)" class="w-full bg-black/40 border border-gray-800 focus:border-cyan-500 text-cyan-100 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-cyan-900/5">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 relative">
+                        <div class="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 justify-center items-center w-8 h-8 bg-[#0a0a0a] border border-green-500/30 rounded-full text-green-500 z-20 shadow-lg">
+                            ➜
+                        </div>
+
+                        <div class="flex items-center justify-between text-green-400 font-bold text-xs uppercase border-b border-green-900/50 pb-2 mb-2 md:pl-4">
+                            <span class="flex items-center gap-2"><span class="bg-green-900/20 p-1 rounded">🤖</span> AI đáp (Biến thể)</span>
+                            <span class="text-[9px] text-gray-600 bg-gray-900 px-2 py-0.5 rounded-full border border-gray-800">Random 1 trong các câu</span>
+                        </div>
+
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">1.</span>
+                            <input id="t-out-1" placeholder="VD: Chào đại ca (Đáp án 1)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                        </div>
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">2.</span>
+                            <input id="t-out-2" placeholder="VD: Dạ em nghe (Đáp án 2)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                        </div>
+                        <div class="group relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold select-none">3.</span>
+                            <input id="t-out-3" placeholder="VD: Hello sếp (Đáp án 3)" class="w-full bg-black/40 border border-gray-800 focus:border-green-500 text-green-400 pl-8 pr-3 py-3 text-sm rounded-lg outline-none transition-all placeholder-gray-700 focus:bg-green-900/5">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="train-msg" class="text-xs mt-6 h-5 text-red-400 font-bold text-center relative z-10"></div>
+
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-800 relative z-10">
+                    <button onclick="closeTrainingModal()" class="px-5 py-2.5 text-gray-500 hover:text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:bg-white/5 transition-all">
+                        Hủy bỏ
+                    </button>
+                    <button onclick="submitTraining()" class="px-8 py-2.5 bg-green-600 hover:bg-green-500 text-black rounded-lg shadow-[0_0_20px_rgba(0,255,0,0.4)] hover:shadow-[0_0_30px_rgba(0,255,0,0.6)] text-xs font-black transition-all uppercase tracking-wider flex items-center gap-2">
+                        <span>⚡</span> Nạp dữ liệu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="login-modal" class="fixed inset-0 z-[9999] hidden flex-col items-center justify-center bg-black/95 backdrop-blur-md font-mono transition-all duration-500">
+        <div class="relative w-full max-w-md p-8 mx-4 border border-cyan-500/30 bg-[#050505] rounded-xl shadow-[0_0_100px_rgba(6,182,212,0.15)] overflow-hidden">
+            <div class="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[1] bg-[length:100%_2px,3px_100%] opacity-20"></div>
+            
+            <div class="relative z-10 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-6 border border-cyan-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse">
+                    <span class="text-3xl">👤</span>
+                </div>
+                
+                <h2 class="text-2xl font-black text-cyan-400 tracking-[0.2em] mb-2 glitch-text">IDENTITY_CHECK</h2>
+                <p class="text-xs text-gray-500 mb-8 font-sans">Vui lòng khai báo danh tính để truy cập hệ thống.</p>
+
+                <div class="w-full relative group">
+                    <input type="text" id="login-name-input" 
+                        class="w-full bg-cyan-900/5 border-b-2 border-gray-700 text-center text-xl text-cyan-100 py-3 px-4 focus:border-cyan-400 focus:outline-none focus:bg-cyan-900/10 transition-all placeholder-gray-700 font-bold uppercase tracking-wider"
+                        placeholder="NHẬP TÊN ĐẠI CA..." autocomplete="off">
+                    <div class="absolute bottom-0 left-0 w-0 h-[2px] bg-cyan-400 transition-all duration-300 group-focus-within:w-full"></div>
+                </div>
+
+                <button onclick="submitLoginName()" 
+                    class="mt-8 px-10 py-3 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-widest rounded clip-path-polygon hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all transform hover:-translate-y-1 active:scale-95 text-sm">
+                    Xác Nhận ➜
+                </button>
+            </div>
+        </div>
+    </div>
     <div id="nuclear-screen" class="nuclear-layer">
         <div id="nuclear-bg" class="nuclear-bg"></div>
         <div id="nuclear-console" class="flex-1 overflow-hidden flex flex-col justify-end"></div>
@@ -279,7 +452,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // --- STATIC BRAIN (JSON TĨNH) ---
@@ -306,6 +479,17 @@
             responses: item.ai,
             isStatic: true 
         }));
+
+        const textarea = document.getElementById('user-input');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.scrollHeight > 94) {
+                this.style.overflowY = "scroll";
+            } else {
+                this.style.overflowY = "hidden";
+            }
+        });
 
         // --- FIREBASE SETUP ---
         const appId = 'dat-ai-promax';
@@ -334,6 +518,7 @@
         window.updateDoc = updateDoc;
         window.doc = doc;
         window.arrayUnion = arrayUnion;
+        window.setDoc = setDoc;
 
         const initFire = async () => {
              if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -348,6 +533,7 @@
                 window.user = user;
                 console.log("LOGGED IN:", user.uid);
                 await loadAllBrains();
+                UserMgr.loadProfile(user.uid);
             }
         });
 
@@ -392,13 +578,14 @@
             if(indicator) indicator.classList.add('hidden');
         }
 
-        window.addToBrain = async (trigger, response) => {
+        window.addToBrain = async (trigger, responses) => {
             if (!window.user) return;
+            const responseArray = Array.isArray(responses) ? responses : [responses];
             
             // 1. Save to Memory (RAM) immediately
             const newItem = {
                 trigger: trigger.toLowerCase(),
-                responses: [response],
+                responses: responseArray,
                 source: 'cloud',
                 isStatic: false
             };
@@ -407,15 +594,19 @@
             // 2. Try saving to Firebase (if available)
             try {
                 const colRef = collection(db, 'artifacts', window.appId, 'public', 'data', 'ai_brain');
-                const existingCloud = window.brainData.find(b => b.source === 'cloud' && b.trigger.toLowerCase() === trigger.toLowerCase());
+                // Check if existing
+                const existingCloud = window.brainData.find(b => b.source === 'cloud' && b.trigger.toLowerCase() === trigger.toLowerCase() && b.id);
                 
-                if (existingCloud && existingCloud.id) {
+                if (existingCloud) {
                     const docRef = doc(db, 'artifacts', window.appId, 'public', 'data', 'ai_brain', existingCloud.id);
-                    await updateDoc(docRef, { responses: arrayUnion(response) });
+                    // Merge new responses
+                    for(let r of responseArray) {
+                         await updateDoc(docRef, { responses: arrayUnion(r) });
+                    }
                 } else {
                     await addDoc(colRef, {
                         trigger: trigger.toLowerCase(),
-                        responses: [response],
+                        responses: responseArray,
                         author: window.user.uid,
                         timestamp: Date.now()
                     }); 
@@ -445,6 +636,16 @@
     </script>
 
     <script>
+        // --- BIT FACE ENGINE (8x8) ---
+        const FACES = {
+            NEUTRAL: [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
+            ANGRY:   [1,0,0,0,0,0,0,1, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1],
+            HAPPY:   [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
+            THINKING:[0,0,0,0,0,0,0,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,0,1,0,0,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0],
+            HACKER:  [1,1,1,1,1,1,1,1, 1,0,0,1,1,0,0,1, 1,0,0,1,1,0,0,1, 1,1,1,1,1,1,1,1, 0,0,1,0,0,1,0,0, 0,1,0,1,1,0,1,0, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0],
+            SAD:     [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,1,1,1,1,1,1,0, 1,0,0,0,0,0,0,1, 0,0,0,0,0,0,0,0],
+            LOVE:    [0,0,1,0,0,1,0,0, 0,1,1,1,1,1,1,0, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 0,1,1,1,1,1,1,0, 0,0,1,1,1,1,0,0, 0,0,0,1,1,0,0,0, 0,0,0,0,0,0,0,0]
+        };
         // --- CONFIG & DOM ---
         const els = {
             ruin: document.getElementById('ruin-screen'),
@@ -472,21 +673,174 @@
             masterName: "Đạt",
             isHunting: false,
             isLearning: false,
-            pendingTrigger: null 
+            pendingTrigger: null,
+            lastTopic: null,
+            waitingForConfirm: false,
+            potentialMatchEntry: null,
+            pendingUserTrigger: null,
+            currentMode: 'chat',
+            emotionScore: 60,
+            userName: null,
+            userDocId: null,
+            lastEmotionUpdate: 0
         };
+        // --- EMOTION CONSTANTS ---
+        const EMOTION_CONFIG = {
+            POSITIVE_WORDS: ['yêu', 'thích', 'giỏi', 'ngoan', 'đẹp', 'tốt', 'hay', 'đỉnh', 'pro', 'vip', 'cảm ơn', 'thank', 'ok', 'tuyệt', 'xịn'],
+            NEGATIVE_WORDS: ['ngu', 'chó', 'cút', 'đần', 'óc', 'lợn', 'heo', 'điên', 'khùng', 'fuck', 'đm', 'vcl', 'ngô', 'dốt', 'kém', 'ghét', 'xấu', 'tệ'],
+            ICONS_HATE: ['😏', '🙄', '😒', '😠', '🥱', '╭∩╮( •̀_•́ )╭∩╮', '(° ͜ʖ͡°)╭∩╮'],
+            ICONS_SAD: ['😢', '😭', '😞', '☹️', '💔', '🥺'],
+            ICONS_HAPPY: ['😄', '🥰', '😘', '🤣', 'hihi', 'haha'],
+            THRESHOLDS: {
+                HATE: 19,   // 0-19
+                ANGRY: 39,  // 20-39
+                SAD: 59,    // 40-59
+                NORMAL: 79, // 60-79
+                HAPPY: 94,  // 80-94
+                LOVE: 100   // 95-100
+            }
+        };
+        // --- USER & EMOTION MANAGER ---
+        const UserMgr = {
+            async loadProfile(uid) {
+                try {
+                    const docRef = doc(db, 'artifacts', window.appId, 'users', uid);
+                    const snap = await window.getDocs(collection(db, 'artifacts', window.appId, 'users'));
+                    const localData = localStorage.getItem(`dat_ai_user_${uid}`);
+                    if (localData) {
+                        const parsed = JSON.parse(localData);
+                        state.userName = parsed.name;
+                        state.emotionScore = parsed.emotion || 60;
+                        console.log("Loaded User from Local:", state.userName, state.emotionScore);
+                        this.updateVisuals();
+                        return;
+                    }
+                    this.askName();
+                } catch (e) {
+                    console.log("User load error:", e);
+                    state.emotionScore = 60;
+                }
+            },
+
+            askName() {
+                if (!state.userName) {
+                    const modal = document.getElementById('login-modal');
+                    const input = document.getElementById('login-name-input');
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+                    setTimeout(() => input.focus(), 100);
+                }
+            },
+
+            async saveProfile() {
+                if (!window.user) return;
+                const data = {
+                    author: window.user.uid,
+                    name: state.userName,
+                    emotion: state.emotionScore,
+                    lastLogin: Date.now()
+                };
+                localStorage.setItem(`dat_ai_user_${window.user.uid}`, JSON.stringify(data));
+                const now = Date.now();
+                if (now - state.lastEmotionUpdate > 10000) {
+                    try {
+                        const userDocRef = doc(db, 'artifacts', window.appId, 'users', window.user.uid);
+                        await setDoc(userDocRef, data, { merge: true });
+                        
+                        console.log(">>> Đã lưu Profile lên Firebase: ", data);
+                        state.lastEmotionUpdate = now;
+                    } catch (e) {
+                        console.error("Lỗi lưu Firebase:", e);
+                    }
+                }
+            },
+
+            updateScore(text) {
+                if (state.currentMode !== 'chat') return;
+
+                const lower = text.toLowerCase();
+                let delta = 0;
+                EMOTION_CONFIG.POSITIVE_WORDS.forEach(w => {
+                    if (lower.includes(w)) delta += 1;
+                });
+                EMOTION_CONFIG.NEGATIVE_WORDS.forEach(w => {
+                    if (lower.includes(w)) delta -= 3;
+                });
+
+                state.emotionScore += delta;
+                if (state.emotionScore > 100) state.emotionScore = 100;
+                if (state.emotionScore < 0) state.emotionScore = 0;
+
+                console.log(`Emotion Updated: Delta ${delta} -> Score ${state.emotionScore}`);
+                this.updateVisuals();
+                this.saveProfile();
+            },
+
+            getEmotionState() {
+                const s = state.emotionScore;
+                if (s <= EMOTION_CONFIG.THRESHOLDS.HATE) return 'HATE';
+                if (s <= EMOTION_CONFIG.THRESHOLDS.ANGRY) return 'ANGRY';
+                if (s <= EMOTION_CONFIG.THRESHOLDS.SAD) return 'SAD';
+                if (s <= EMOTION_CONFIG.THRESHOLDS.NORMAL) return 'NORMAL';
+                if (s <= EMOTION_CONFIG.THRESHOLDS.HAPPY) return 'HAPPY';
+                return 'LOVE';
+            },
+            modifyOutput(text) {
+                const emo = this.getEmotionState();
+                let modified = text;
+                if (emo === 'HATE') {
+                    const icon = EMOTION_CONFIG.ICONS_HATE[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_HATE.length)];
+                    return icon;
+                }
+                if (emo === 'ANGRY') {
+                    modified = modified.replace(/tôi|tớ|mình|em|anh/gi, "tao")
+                                       .replace(/bạn|cậu|đại ca|chủ nhân|sếp/gi, "mày")
+                                       .replace(/ạ|dạ/gi, "");
+                }
+                if (emo === 'SAD') {
+                    const icon = EMOTION_CONFIG.ICONS_SAD[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_SAD.length)];
+                    modified = `${modified} ${icon}`;
+                }
+                if (emo === 'HAPPY') {
+                    const icon = EMOTION_CONFIG.ICONS_HAPPY[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_HAPPY.length)];
+                    modified = `${modified} ${icon}`;
+                }
+                if (emo === 'LOVE') {
+                    modified = modified.replace(/tôi|tao/gi, "tớ")
+                                       .replace(/bạn|mày/gi, "cậu")
+                                       .replace(/chào/gi, "iu");
+                    modified += " ❤️";
+                }
+
+                return modified;
+            },
+
+            updateVisuals() {
+                const emo = this.getEmotionState();
+                const faceMap = {
+                    'HATE': 'ANGRY',
+                    'ANGRY': 'ANGRY',
+                    'SAD': 'SAD',
+                    'NORMAL': 'NEUTRAL',
+                    'HAPPY': 'HAPPY',
+                    'LOVE': 'LOVE'
+                };
+                renderFace(faceMap[emo]);
+                const statusText = document.getElementById('status-text');
+                if(statusText) {
+                    statusText.innerText = `${emo}_MODE (${state.emotionScore}%)`;
+                    statusText.className = "font-bold " + 
+                        (emo === 'HATE' || emo === 'ANGRY' ? 'text-red-500' : 
+                         emo === 'LOVE' ? 'text-pink-500' : 
+                         emo === 'HAPPY' ? 'text-green-400' : 'text-cyan-400');
+                }
+            }
+        };
+        
 
         const wait = (ms) => new Promise(r => setTimeout(r, ms));
         const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
         let skipped = false;
-
-        // --- BIT FACE ENGINE (8x8) ---
-        const FACES = {
-            NEUTRAL: [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
-            ANGRY: [1,0,0,0,0,0,0,1, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1],
-            HAPPY: [0,0,0,0,0,0,0,0, 0,1,1,0,0,1,1,0, 0,1,1,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,1,0,0,0,0,1,0, 1,0,0,0,0,0,0,1, 0,1,1,1,1,1,1,0, 0,0,0,0,0,0,0,0],
-            THINKING: [0,0,0,0,0,0,0,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,1,1,0, 0,0,0,0,0,0,0,0, 0,0,1,1,1,1,0,0, 0,0,1,0,0,1,0,0, 0,0,1,1,1,1,0,0, 0,0,0,0,0,0,0,0],
-            HACKER: [1,1,1,1,1,1,1,1, 1,0,0,1,1,0,0,1, 1,0,0,1,1,0,0,1, 1,1,1,1,1,1,1,1, 0,0,1,0,0,1,0,0, 0,1,0,1,1,0,1,0, 0,1,0,0,0,0,1,0, 0,0,1,1,1,1,0,0]
-        };
 
         function initAvatar() {
             els.avatar.innerHTML = '';
@@ -503,13 +857,15 @@
             const pixels = els.avatar.querySelectorAll('.bit-pixel');
             els.avatar.classList.remove('shake-screen');
             if(emotion === 'ANGRY') els.avatar.classList.add('shake-screen');
-
+            
             pixels.forEach((p, i) => {
                 p.className = 'bit-pixel'; 
                 if (map[i] === 1) {
                     p.classList.add('on');
                     if(emotion === 'ANGRY') p.classList.add('angry');
                     if(emotion === 'HAPPY') p.classList.add('happy');
+                    if(emotion === 'LOVE') p.classList.add('happy');
+                    if(emotion === 'SAD') p.classList.add('thinking');
                     if(emotion === 'THINKING') p.classList.add('thinking');
                 }
             });
@@ -713,9 +1069,10 @@
         }
 
         // --- STAGE 3: CHATBOT ENGINE ---
-        function addMsg(text, sender, isThreat = false) {
+        function addMsg(text, sender, isThreat = false, id = null) {
             const div = document.createElement('div');
             div.className = `flex ${sender==='user'?'justify-end':'justify-start'} msg-enter`;
+            if (id) div.id = id;
             
             const bubble = document.createElement('div');
             if(sender === 'user') {
@@ -729,10 +1086,11 @@
                 let title = isThreat ? "SYSTEM_HUNTER" : state.aiName;
                 let titleColor = isThreat ? "text-red-500" : "text-cyan-500";
                 
-                bubble.innerHTML = `<span class="text-[9px] font-black ${titleColor} block mb-1 tracking-widest border-b border-white/5 pb-1">${title}</span>${text}`;
+                bubble.innerHTML = `<span class="text-[9px] font-black ${titleColor} block mb-1 tracking-widest border-b border-white/5 pb-1">${title}</span><span class="msg-content">${text}</span>`;
             }
-            if (sender !== 'user') {
-                speak(text);
+            if (sender !== 'user' && !isThreat) {
+                // Only speak cleaner text if possible (logic handled in process)
+                speak(text.replace(/<[^>]*>?/gm, '')); 
             }
             
             div.appendChild(bubble);
@@ -740,9 +1098,62 @@
             requestAnimationFrame(() => {
                 els.chat.scrollTop = els.chat.scrollHeight;
             });
+            return bubble;
         }
 
+        // --- CONFIRMATION UI ---
+        function askConfirmation(userInput, matchedEntry) {
+            const id = 'confirm-' + Date.now();
+            const bubble = addMsg("", "ai", false, id);
+            
+            // Custom HTML for the confirmation box
+            const content = bubble.querySelector('.msg-content');
+            content.innerHTML = `
+                Tôi thấy bạn hỏi: <b>"${userInput}"</b>.<br>
+                Có vẻ giống với câu: <b>"${matchedEntry.trigger}"</b> mà tôi đã biết.<br>
+                <div class="confirm-box">
+                    <span class="confirm-title">Hai câu này ý nghĩa giống nhau không?</span>
+                    <div class="btn-group">
+                        <button class="confirm-btn btn-yes" onclick="confirmSimilarity(true, '${id}')">ĐÚNG RỒI (LƯU)</button>
+                        <button class="confirm-btn btn-no" onclick="confirmSimilarity(false, '${id}')">KHÔNG PHẢI (DẠY MỚI)</button>
+                    </div>
+                </div>
+            `;
+            
+            state.waitingForConfirm = true;
+            state.potentialMatchEntry = matchedEntry;
+            state.pendingUserTrigger = userInput;
+        }
+
+        window.confirmSimilarity = async (isYes, elemId) => {
+            const container = document.getElementById(elemId);
+            if(container) container.remove();
+
+            state.waitingForConfirm = false;
+            
+            if (isYes) {
+                const matched = state.potentialMatchEntry;
+                const userInput = state.pendingUserTrigger;
+                if (window.addToBrain) {
+                    await window.addToBrain(userInput, matched.responses);
+                }
+                const responses = matched.responses;
+                const randomResp = responses[Math.floor(Math.random() * responses.length)];
+                addMsg(randomResp, "ai");
+            } else {
+                addMsg("À, vậy xin lỗi nhé. Vậy câu đó trả lời sao mới đúng?", "ai");
+                state.isLearning = true;
+                state.pendingTrigger = state.pendingUserTrigger;
+            }
+            
+            // Clean up
+            state.potentialMatchEntry = null;
+            state.pendingUserTrigger = null;
+        }
+
+
         async function initChat() {
+            setMode('chat');
             await wait(500);
             renderFace('HACKER');
             addMsg("Hệ thống đã nạp. Chào thế giới tao là AI vip pro max đây.", "ai");
@@ -781,41 +1192,165 @@
             return s;
         }
 
-        function cleanText(text) {
-            return text.toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
-                .replace(/\s{2,}/g, " ")
-                .trim();
-        }
-        function getJaccardScore(s1, s2) {
-            const arr1 = new Set(s1.split(' '));
-            const arr2 = new Set(s2.split(' '));
-            const intersection = new Set([...arr1].filter(x => arr2.has(x)));
-            const union = new Set([...arr1, ...arr2]);
-            return intersection.size / union.size;
-        }
-        function smartSimilarity(input, trigger) {
-            const cleanInput = cleanText(input);
-            const cleanTrigger = cleanText(trigger);
-            if (cleanInput === cleanTrigger) return 1.0;
-            if (cleanTrigger.length < 4) return 0;
-            if (cleanInput.includes(cleanTrigger)) {
-                 if (!cleanTrigger.includes(' ')) return 0.6;
-                 return 0.85 + (cleanTrigger.length / cleanInput.length) * 0.1; 
+
+        // --- IMPROVED SIMILARITY ALGORITHM (Levenshtein + Jaccard) ---
+        function levenshteinDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) == a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                    }
+                }
             }
-            if (cleanTrigger.includes(cleanInput) && cleanInput.length > 3) {
-                return 0.7;
-            }
-            return getJaccardScore(cleanInput, cleanTrigger);
+            return matrix[b.length][a.length];
         }
+
+
+        function cleanAndNormalize(text) {
+            let raw = text.toLowerCase().trim();
+            
+            if (/^[^a-zA-Z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ\s]+$/.test(raw)) {
+                return raw;
+            }
+
+            let clean = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                           .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ")
+                           .replace(/\s{2,}/g, " ");
+
+            let words = clean.split(' ');
+            let normalizedWords = words
+                .map(w => SYNONYMS[w] || w)
+                .filter(w => !STOP_WORDS.has(w));
+            if (normalizedWords.length === 0) return words;
+
+            return normalizedWords;
+        }
+
+        function getWeightedScore(input, target) {
+            const words1 = cleanAndNormalize(input);
+            const words2 = cleanAndNormalize(target);
+            const len1 = words1.length;
+            const len2 = words2.length;
+            if (len1 === 0 || len2 === 0) return 0;
+            if (len1 > len2 * 3 || len2 > len1 * 3) return 0;
+            if (input === target) return 1.0;
+            let intersectionScore = 0;
+            let unionScore = 0;
+            const allWords = new Set([...words1, ...words2]);
+
+            allWords.forEach(w => {
+                let weight = COMMON_WORDS.has(w) ? 1 : 5;
+
+                const in1 = words1.includes(w);
+                const in2 = words2.includes(w);
+
+                if (in1 || in2) unionScore += weight;
+                if (in1 && in2) intersectionScore += weight;
+            });
+
+            return intersectionScore / unionScore;
+        }
+        // --- 3. XỬ LÝ NGỮ CẢNH (CONTEXT) ---
+        function tryContextRecovery(input, lastTrigger) {
+            if (!lastTrigger) return null;
+            let cleanInput = input.toLowerCase().trim();
+            const connectWords = ['thế còn', 'vậy còn', 'còn', 'thế', 'vậy', 'thì sao', 'về'];
+            
+            let newSubject = cleanInput;
+            for (let w of connectWords) {
+                if (cleanInput.startsWith(w + ' ')) {
+                    newSubject = cleanInput.replace(w, '').trim();
+                    break;
+                }
+                if (cleanInput.endsWith(' ' + w)) {
+                     newSubject = cleanInput.replace(w, '').trim();
+                     break;
+                }
+            }
+            if (newSubject.length < 2) return null;
+
+            console.log(`Context Check: Subject="${newSubject}" | Context="${lastTrigger}"`);
+            const potentialMatches = window.brainData.filter(item => {
+                return item.trigger.toLowerCase().includes(newSubject);
+            });
+
+            if (potentialMatches.length === 0) return null;
+            let bestContextMatch = null;
+            let bestContextScore = 0;
+
+            for (let match of potentialMatches) {
+                let score = getWeightedScore(match.trigger, lastTrigger);
+                if (score > bestContextScore) {
+                    bestContextScore = score;
+                    bestContextMatch = match;
+                }
+            }
+            if (bestContextScore > 0.5) {
+                return { match: bestContextMatch, score: bestContextScore };
+            }
+
+            return null;
+        }
+        // --- TỪ ĐIỂN ĐỒNG NGHĨA & TỪ PHỔ THÔNG ---
+        const SYNONYMS = {
+            'khong': 'không', 'ko': 'không', 'k': 'không', 'khum': 'không', 'hong': 'không', 'hông': 'không', 'nô': 'không', 'đếch': 'không',
+            'dc': 'được', 'đc': 'được', 
+            'bit': 'biết', 'bít': 'biết',
+            'u': 'ừ', 'uh': 'ừ', 'uhm': 'ừ', 'uk': 'ừ', 'ye': 'ừ', 'yes': 'ừ',
+            'đâu': 'đâu', 'dau': 'đâu',
+            'gì': 'gì', 'j': 'gì',
+            'ak': 'à', 'ah': 'à',
+            'rùi': 'rồi', 'r': 'rồi',
+            'là gì': 'biết không', 'con gì': 'biết không', 'con nào': 'biết không', 'cái gì': 'biết không', 'define': 'biết không', 'what': 'biết không', 'như nào': 'biết không', 'là sao': 'biết không', 'hiểu': 'biết'
+        };
+
+        // Những từ này xuất hiện nhiều nhưng ít quan trọng -> Điểm thấp
+        const COMMON_WORDS = new Set([
+            'mày', 'tao', 'tớ', 'cậu', 'anh', 'em', 'bạn', 'tui', 'minh',
+            'con', 'cái', 'thằng', 'bé', 
+            'là', 'thì', 'mà', 'bị', 'được', 'ở',
+            'biết', 'hiểu', 'nghe', 'thấy', 'có', 'không',
+            'nhé', 'nha', 'à', 'ơi', 'hả', 'hở', 'thế', 'nào'
+        ]);
+
+        const STOP_WORDS = new Set([
+            'mày', 'tao', 'tớ', 'cậu', 'anh', 'em', 'bạn', 'tui', 'minh', 'mình',
+            'con', 'cái', 'thằng', 'bé', 'nó', 'hắn', 'bả', 'ổng',
+            'là', 'thì', 'mà', 'bị', 'được', 'ở', 'của', 'những', 'các'
+        ]);
+
 
 
         async function processResponse(text, rawText) {
             const lower = text.toLowerCase().trim();
+            UserMgr.updateScore(rawText);
+            const currentEmo = UserMgr.getEmotionState();
+            if (currentEmo === 'HATE' && state.currentMode === 'chat') {
+                const hateResponse = UserMgr.modifyOutput(""); 
+                addMsg(hateResponse, "ai");
+                renderFace('ANGRY');
+                return;
+            }
+            if (state.lastTopic) {
+                const contextResult = tryContextRecovery(lower, state.lastTopic);
+                if (contextResult) {
+                    console.log(">>> CONTEXT FOUND:", contextResult.match.trigger);
+                    state.lastTopic = contextResult.match.trigger; 
+                    
+                    renderFace('HAPPY');
+                    const responses = contextResult.match.responses;
+                    const randomResp = responses[Math.floor(Math.random() * responses.length)];
+                    addMsg(`(Hiểu ý: "${contextResult.match.trigger}")\n${randomResp}`, "ai");
+                    return;
+                }
+            }
             const mathKeywords = ['bằng bao nhiêu', 'bằng mấy', 'kết quả là', 'đáp án', 'tính'];
             const hasMathSign = /[+\-*/^%]/.test(lower) || /\b(cộng|trừ|nhân|chia|x)\b/.test(lower);
-            
             if ((hasMathSign || mathKeywords.some(k => lower.includes(k))) && /\d/.test(lower)) {
                 let mathStr = lower
                     .replace(/cộng/g, '+').replace(/trừ/g, '-').replace(/nhân/g, '*')
@@ -824,33 +1359,28 @@
                     .replace(/là/g, '').replace(/tính/g, '').replace(/,/g, '.');
                 const mathRegex = /[0-9\.\(\)\+\-\*\/\^% ]+/g;
                 const matches = mathStr.match(mathRegex);
-        
                 if (matches) {
                     let potentialMath = matches.reduce((a, b) => a.length > b.length ? a : b).trim();
                     if (/[+\-*/^%]/.test(potentialMath) && potentialMath.length > 2) {
                         const result = solveMath(potentialMath);
-                        if (result !== null) {
-                            addMsg(`🧮 Phép tính: ${potentialMath}\n👉 Kết quả: ${result}`, "ai");
-                            return;
-                        }
+                        if (result !== null) { addMsg(`🧮 Phép tính: ${potentialMath}\n👉 Kết quả: ${result}`, "ai"); return; }
                     }
                 }
             }
+            // --- CHẾ ĐỘ TRA CỨU (WIKI / GOOGLE) ---
             if (/^(tra|tìm|search|wiki|google|gú gồ) /.test(lower)) {
                 const keyword = rawText.replace(/^(tra|tìm|search|wiki|google|gú gồ)/i, '').trim();
                 if(!keyword) { addMsg("Tìm gì thì nói rõ ra chứ?", "ai"); return; }
-        
                 if (lower.startsWith('google') || lower.startsWith('gú gồ')) {
                      addMsg(`🚀 Đang phóng ra Google tìm "${keyword}"...`, "ai");
                      await wait(1000); 
                      window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
                      return;
                 }
-        
                 addMsg(`🔍 Đang tra cứu tri thức về "${keyword}"...`, "ai");
                 await wait(1000);
                 try {
-                    const wikiRes = await fetch(`https://vi.wikipedia.org/w/api.php?origin=*&action=query&prop=extracts&exintro&explaintext&format=json&titles=${encodeURIComponent(keyword)}`);
+                    const wikiRes = await fetch(`https://vi.wikipedia.org/w/api.php?origin=*&action=query&prop=extracts&exintro&explaintext&format=json&redirects=1&titles=${encodeURIComponent(keyword)}`);
                     const wikiData = await wikiRes.json();
                     const pages = wikiData.query.pages;
                     const pageId = Object.keys(pages)[0];
@@ -866,69 +1396,154 @@
                             await wait(1500);
                             window.open(`https://vi.wikipedia.org/wiki/${encodeURIComponent(keyword)}`, '_blank');
                         } else {
-                            if (extract.length > 400) extract = extract.substring(0, 400) + "...";
-                            addMsg(`📖 **Theo Bách khoa toàn thư:**\n${extract}\n\n(Nguồn: Wikipedia)`, "ai");
+                            const uid = 'wiki_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                            const isLong = extract.length > 500;
+                            
+                            let contentHtml = '';
+                            
+                            if (isLong) {
+                                const shortText = extract.substring(0, 500) + "...";
+                                contentHtml = `
+                                    <div id="${uid}_short" style="display: block;">${shortText}</div>
+                                    <div id="${uid}_full" style="display: none;">${extract}</div>
+                                    
+                                    <div style="margin-top: 12px; text-align: center;">
+                                        <button onclick="
+                                            const s = document.getElementById('${uid}_short');
+                                            const f = document.getElementById('${uid}_full');
+                                            if(s.style.display !== 'none') {
+                                                s.style.display = 'none';
+                                                f.style.display = 'block';
+                                                this.innerHTML = 'Thu gọn ⬆';
+                                                this.style.borderColor = '#ff5555';
+                                                this.style.color = '#ff5555';
+                                            } else {
+                                                s.style.display = 'block';
+                                                f.style.display = 'none';
+                                                this.innerHTML = 'Xem thêm ⬇';
+                                                this.style.borderColor = '#00ffff';
+                                                this.style.color = '#00ffff';
+                                            }
+                                        " style="font-size: 10px; color: #00ffff; border: 1px solid #00ffff; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: sans-serif; font-weight: bold;"
+                                        onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'" 
+                                        onmouseout="this.style.background='rgba(0,0,0,0.3)'">
+                                            Xem thêm ⬇
+                                        </button>
+                                    </div>
+                                `;
+                            } else {
+                                contentHtml = `<div>${extract}</div>`;
+                            }
+                            const wikiCard = `
+                                <div style="margin-top: 8px; background: rgba(255, 255, 255, 0.05); border-left: 4px solid #ffffff; border-radius: 4px; padding: 12px; font-family: 'Times New Roman', serif; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                                    <div style="position: absolute; top: -10px; right: -10px; font-size: 80px; opacity: 0.05; pointer-events: none; user-select: none;">W</div>
+                                    
+                                    <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 8px;">
+                                        <span style="font-size: 20px;">🌐</span>
+                                        <div>
+                                            <div style="font-weight: bold; font-family: sans-serif; font-size: 11px; letter-spacing: 1px; color: #fff;">BÁCH KHOA TOÀN THƯ</div>
+                                            <div style="font-size: 9px; color: #aaa; font-style: italic;">Nguồn: Wikipedia Tiếng Việt</div>
+                                        </div>
+                                    </div>
+
+                                    <div style="font-size: 15px; line-height: 1.6; color: #e5e5e5; text-align: justify;">
+                                        ${contentHtml}
+                                    </div>
+
+                                    <div style="margin-top: 12px; text-align: right; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+                                        <a href="https://vi.wikipedia.org/wiki/${encodeURIComponent(keyword)}" target="_blank" 
+                                           style="font-family: sans-serif; font-size: 9px; color: #888; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s;"
+                                           onmouseover="this.style.color='#fff'" 
+                                           onmouseout="this.style.color='#888'">
+                                           Mở trang gốc trên Wikipedia ➜
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            addMsg(wikiCard, "ai");
                         }
                     }
                 } catch (e) {
+                    console.error(e);
                     window.open(`https://www.google.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
                 }
                 return;
             }
-            const musicRegex = /^(mở|bật|lên)\s+(nhạc|bài)|^(nghe|thẩm|thưởng thức)|^(youtube)/i;
-            if (musicRegex.test(lower)) {
-                const song = rawText.replace(musicRegex, '').trim();
-                if(song) {
-                    addMsg(`🎵 Lên nhạc: ${song}! Quẩy lên!`, "ai");
-                    await wait(1500); 
-                    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`, '_blank');
-                    return;
-                } else {
-                    addMsg("Mở bài gì mới được chứ? Nói tên bài đi đại ca.", "ai");
-                    return;
-                }
-            }
-            if (lower.includes('xúc xắc') || lower.includes('xí ngầu')) {
-                const dice = Math.floor(Math.random() * 6) + 1;
-                addMsg(`🎲 Xúc xắc lăn ra số: **${dice}**`, "ai");
-                return;
-            }
-            if (lower.includes('tung đồng xu') || lower.includes('sấp ngửa')) {
-                const coin = Math.random() > 0.5 ? "Ngửa" : "Sấp";
-                addMsg(`🪙 Đồng xu lật mặt: **${coin}**`, "ai");
-                return;
-            }
-            if (lower === 'cls' || lower === 'xóa màn hình' || lower === 'clear') {
-                els.chat.innerHTML = '';
-                addMsg("Đã dọn dẹp sạch sẽ.", "ai");
-                return;
-            }
-            if (lower.includes('mấy giờ') || lower.includes('ngày mấy') || lower.includes('thứ mấy') || lower.includes('hôm nay')) {
-                const now = new Date();
-                addMsg(`🕒 Bây giờ là: ${now.toLocaleTimeString('vi-VN')}\n📅 Hôm nay là: ${now.toLocaleDateString('vi-VN')}`, "ai");
-                return;
-            }
-        
-            // --- 5. THỜI TIẾT ---
-            if (lower.includes('thời tiết')) {
-                addMsg("🌍 Đang kết nối vệ tinh xem thời tiết...", "ai");
+            if (lower.includes('tiktok.com') && lower.includes('/video/')) {
                 try {
-                    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=10.82&longitude=106.63&current_weather=true');
-                    const data = await res.json();
-                    const temp = data.current_weather.temperature;
-                    const wind = data.current_weather.windspeed;
-                    addMsg(`🌤️ Thời tiết Sài Gòn:\n- Nhiệt độ: ${temp}°C\n- Gió: ${wind} km/h\n(Nhớ giữ gìn sức khỏe nhé!)`, "ai");
+                    const videoIdMatch = rawText.match(/video\/(\d+)/);
+                    
+                    if (videoIdMatch && videoIdMatch[1]) {
+                        const videoId = videoIdMatch[1];
+                        addMsg(`🎬 **Hàng về!** AI đã bắt được video TikTok (ID: ${videoId})...`, "ai");
+                        const embedHtml = `
+                            <div style="margin-top: 10px; border: 1px solid #00ffff; border-radius: 8px; overflow: hidden; background: #000;">
+                                <iframe 
+                                    src="https://www.tiktok.com/embed/v2/${videoId}?lang=vi-VN" 
+                                    width="100%" 
+                                    height="450" 
+                                    frameborder="0" 
+                                    allowfullscreen
+                                    style="display: block;">
+                                </iframe>
+                            </div>
+                            <div style="font-size: 9px; color: #555; margin-top: 5px;">*Nếu không xem được là do TikTok chặn nhúng trên miền lạ.</div>
+                        `;
+                        addMsg(embedHtml, "ai"); 
+                        return;
+                    }
                 } catch (e) {
-                    addMsg("📡 Mất kết nối vệ tinh. Bạn nhìn ra cửa sổ đỡ nhé.", "ai");
+                    console.error("Lỗi tách link TikTok:", e);
                 }
+            }
+            const youtubeRegex = /^(mở|bật|lên|tìm|xem)\s+(nhạc|bài|video|clip|phim)|^(nghe|thẩm|thưởng thức)|^(youtube)/i;
+            
+            if (youtubeRegex.test(lower)) {
+                const query = rawText.replace(youtubeRegex, '').trim();
+                if(!query) {
+                    addMsg("Tìm gì trên YouTube thì nói rõ tên ra chứ đại ca.", "ai");
+                    return;
+                }
+
+                addMsg(`OK! Đang mở YouTube: **${query}**...`, "ai");
+                const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+        
+                const youtubeCard = `
+                    <div onclick="window.open('${youtubeUrl}', '_blank')" 
+                        style="margin-top: 10px; padding: 12px; border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 12px; 
+                                background: linear-gradient(90deg, rgba(30,0,0,0.9) 0%, rgba(10,10,10,1) 100%); 
+                                display: flex; align-items: center; gap: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(255,0,0,0.1);"
+                        onmouseover="this.style.borderColor='#ff0000'; this.style.transform='scale(1.02)'"
+                        onmouseout="this.style.borderColor='rgba(255, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                        
+                        <div style="width: 40px; height: 40px; background: #ff0000; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 10px #ff0000;">
+                            <div style="width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid white; margin-left: 2px;"></div>
+                        </div>
+
+                        <div style="flex: 1; overflow: hidden;">
+                            <div style="color: #fff; font-weight: bold; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Orbitron', sans-serif;">${query.toUpperCase()}</div>
+                            <div style="color: #ff6666; font-size: 10px; margin-top: 2px; display: flex; align-items: center; gap: 5px;">
+                                <span style="display:inline-block; width:6px; height:6px; background:#0f0; border-radius:50%; animation: pulse 1s infinite;"></span>
+                                Click để XEM trên YouTube
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 2px; align-items: flex-end; height: 20px;">
+                            <div style="width: 3px; height: 10px; background: #ff0000; animation: bounce 0.5s infinite;"></div>
+                            <div style="width: 3px; height: 20px; background: #ff0000; animation: bounce 0.7s infinite;"></div>
+                            <div style="width: 3px; height: 15px; background: #ff0000; animation: bounce 0.6s infinite;"></div>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes bounce { 0%, 100% {height: 5px} 50% {height: 100%} }
+                    </style>
+                `;
+
+                addMsg(youtubeCard, "ai");
                 return;
             }
-            const badWords = ['xấu', 'ngu', 'dở', 'gà', 'chê', 'ghét', 'béo', 'lùn', 'dốt', 'cùi', 'gay', 'simp'];
-            const target = ['đạt', 'tác giả', 'admin', 'chủ', 'creator', 'dat', 'dat09'];
-            if (target.some(t => lower.includes(t)) && badWords.some(w => lower.includes(w))) {
-                state.isMaster ? addMsg("Ngài đang test em đúng không?", "ai") : runThreatSequence();
-                return;
-            }
+            if (lower === 'cls' || lower === 'clear') { els.chat.innerHTML = ''; addMsg("Cleaned.", "ai"); return; }
             let bestMatch = null;
             let maxScore = 0;
             const normalizedInput = normalizePronouns(lower);
@@ -936,7 +1551,7 @@
             if (window.brainData && window.brainData.length > 0) {
                 for (const entry of window.brainData) {
                     const normalizedTrigger = normalizePronouns(entry.trigger);
-                    const score = smartSimilarity(normalizedInput, normalizedTrigger);
+                    const score = getWeightedScore(normalizedInput, normalizedTrigger);
                     
                     if (score > maxScore) {
                         maxScore = score;
@@ -945,33 +1560,39 @@
                 }
             }
             console.log(`Input: "${normalizedInput}" | Match: "${bestMatch?.trigger}" | Score: ${maxScore.toFixed(2)}`);
-            if (maxScore > 0.65 && bestMatch) {
+            if (maxScore > 0.75 && bestMatch) {
+                state.lastTopic = bestMatch.trigger;
+                UserMgr.updateVisuals();
+                
                 renderFace('HAPPY');
                 const responses = bestMatch.responses;
-                const randomResp = responses[Math.floor(Math.random() * responses.length)];
+                let randomResp = responses[Math.floor(Math.random() * responses.length)];
+                randomResp = UserMgr.modifyOutput(randomResp);
                 addMsg(randomResp, "ai");
-            } else {
-                const knowledgeKeywords = [
-                    'là gì', 'là ai', 'thế nào', 'cách', 'làm sao', 'tại sao', 'ở đâu', 'bao nhiêu',
-                    'nghĩa là', 'hướng dẫn', 'công thức', 'nguyên lý', 'cấu tạo', 'tác dụng'
-                ];
-                if (knowledgeKeywords.some(k => lower.includes(k))) {
-                    addMsg(`Câu này thâm sâu quá. Để tôi tra Google cho chuẩn nhé!`, "ai");
-                    await wait(1500); 
-                    window.open(`https://www.google.com/search?q=${encodeURIComponent(rawText)}`, '_blank');
-                    return;
-                }
-
-                if (isGibberish(lower)) {
-                    renderFace('ANGRY');
-                    addMsg("Nhập cái gì thế? Viết tiếng người đi bạn êi.", "ai");
-                    return;
-                }
-                renderFace('THINKING');
-                state.isLearning = true;
-                state.pendingTrigger = text;
-                addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nBạn dạy tôi đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
+                return;
             }
+            if (maxScore >= 0.60 && maxScore <= 0.85 && bestMatch) {
+                renderFace('THINKING');
+                askConfirmation(rawText, bestMatch);
+                return;
+            }
+            const knowledgeKeywords = ['là gì', 'là ai', 'thế nào', 'cách', 'làm sao', 'tại sao'];
+            if (knowledgeKeywords.some(k => lower.includes(k))) {
+                addMsg(`Câu này thâm sâu quá. Google nhé?`, "ai");
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(rawText)}`, '_blank');
+                return;
+            }
+
+            if (isGibberish(lower)) {
+                renderFace('ANGRY');
+                addMsg("Viết tiếng người đi bạn êi.", "ai");
+                return;
+            }
+
+            renderFace('THINKING');
+            state.isLearning = true;
+            state.pendingTrigger = text;
+            addMsg(`Câu này mới quá (Độ giống: ${Math.floor(maxScore*100)}%). Chưa được học.\nBạn dạy tôi đi: Trả lời câu "${text}" thế nào cho ngầu?`, "ai");
         }
 
         let voiceOn = true;
@@ -1014,7 +1635,6 @@
             const lang = detectLanguage(text);
             const dynamicSpeed = calculateSpeed(text);
 
-            console.log(`🔊 Speaking: "${text}" | Mode: ${nativeVoiceVN ? 'Native (Mobile/App)' : 'Link Hack (PC)'}`);
             if (lang === 'vi-VN') {
                 if (nativeVoiceVN) {
                     const utterance = new SpeechSynthesisUtterance(text);
@@ -1055,6 +1675,18 @@
             if (!voiceOn) return;
             speechQueue.push(text);
             processQueue();
+        }
+
+        function stopSpeaking() {
+            speechQueue = []; 
+            isSpeaking = false;
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
         }
         
         async function handleTeaching(input) {
@@ -1148,11 +1780,18 @@
 
         function handleSend() {
             try {
+                stopSpeaking();
+                
                 const rawTxt = els.input.value.trim();
                 if(!rawTxt) return;
-
-                // AUTH CHECK
-                let displayTxt = rawTxt;
+                let finalTxt = rawTxt;
+                if (state.currentMode === 'expert') {
+                    finalTxt = "tra " + rawTxt;
+                }
+                else if (state.currentMode === 'entertainment') {
+                    finalTxt = "youtube " + rawTxt;
+                }
+                let displayTxt = finalTxt;
                 if (rawTxt.includes("DATDZVLRA")) {
                     state.isMaster = true;
                     displayTxt = rawTxt.replace("DATDZVLRA", "").trim(); 
@@ -1160,11 +1799,8 @@
                     els.status.innerText = "SERVING GOD";
                     state.isHunting = false; 
                 }
-
-                addMsg(displayTxt, "user");
+                addMsg(rawTxt, "user"); 
                 els.input.value = '';
-
-                // --- SPECIAL COMMANDS FOR GITHUB ---
                 if (displayTxt.toLowerCase() === 'save brain' || displayTxt.toLowerCase() === 'lưu não' || displayTxt.toLowerCase() === 'tải não') {
                     if (window.saveBrainToFile) {
                         addMsg("Đang tổng hợp kiến thức... Bắt đầu tải file JSON.", "ai");
@@ -1175,32 +1811,41 @@
                     }
                     return;
                 }
-
-                // --- LEARNING MODE LOGIC ---
                 if (state.isLearning) {
                     handleTeaching(rawTxt);
                     return;
                 }
-
-                // --- HUNTING LOGIC ---
+                if (state.waitingForConfirm) {
+                    addMsg("Vui lòng bấm nút chọn ở trên trước đã.", "ai");
+                    return;
+                }
                 if (state.isHunting) {
                     const lower = rawTxt.toLowerCase();
-                    if (lower.includes('xin lỗi') || lower.includes('sorry') || lower.includes('xin loi')) {
+                    const apologyKeywords = ['xin lỗi', 'sorry', 'xin loi', 'xl', 'tha cho', 'sai rồi'];
+                    const negationWords = ['không', 'ko ', 'k ', 'đéo', 'dell', 'éo', 'never', 'đếch', 'không bao giờ', 'mơ đi'];
+
+                    const hasApology = apologyKeywords.some(kw => lower.includes(kw));
+                    const hasRefusal = negationWords.some(nw => lower.includes(nw));
+                    if (hasApology && !hasRefusal) {
                         state.isHunting = false;
                         renderFace('HAPPY');
                         els.status.innerText = "CONNECTED";
                         els.status.className = "text-green-400 font-bold";
-                        setTimeout(() => addMsg("Tốt. Đạt rất bao dung. Đừng tái phạm.", "ai"), 500);
+                        setTimeout(() => addMsg("Tốt. Biết quay đầu là bờ. Đừng để Đạt buồn nữa.", "ai"), 500);
                         return;
-                    } else {
-                        setTimeout(() => runNuclearProtocol(), 1000);
+                    } 
+                    else {
+                        if (hasRefusal) {
+                            addMsg("Dám thách thức à? Vĩnh biệt!", "ai", true);
+                        }
+                        setTimeout(() => runNuclearProtocol(), 1500);
                         return;
                     }
                 }
                 
                 renderFace('THINKING');
                 setTimeout(() => {
-                    processResponse(displayTxt, rawTxt); 
+                    processResponse(displayTxt, displayTxt); 
                 }, 600);
             } catch (e) {
                 console.error("Chat Error:", e);
@@ -1234,11 +1879,143 @@
         } else {
             document.addEventListener('DOMContentLoaded', runChaos);
         }
+        // --- LOGIC CÔNG CỤ & CHẾ ĐỘ ---
+        function toggleTools() {
+            const menu = document.getElementById('tools-menu');
+            menu.classList.toggle('hidden');
+        }
 
-        
+        function setMode(mode) {
+            state.currentMode = mode;
+            const btn = document.getElementById('current-mode-btn');
+            const input = document.getElementById('user-input');
+            const menu = document.getElementById('tools-menu');
+            menu.classList.add('hidden');
+            let config = {};
+            
+            if (mode === 'chat') {
+                config = {
+                    icon: '💬',
+                    label: 'Nói chuyện',
+                    colorClass: 'text-cyan-400',
+                    bgClass: 'bg-cyan-900/20',
+                    placeholder: 'Nhập tin nhắn...'
+                };
+            } 
+            else if (mode === 'expert') {
+                config = {
+                    icon: '🎓',
+                    label: 'Chuyên gia',
+                    colorClass: 'text-yellow-400',
+                    bgClass: 'bg-yellow-900/20',
+                    placeholder: 'Nhập từ khóa cần tra cứu...'
+                };
+            } 
+            else if (mode === 'entertainment') {
+                config = {
+                    icon: '🎬',
+                    label: 'Giải trí',
+                    colorClass: 'text-pink-400',
+                    bgClass: 'bg-pink-900/20',
+                    placeholder: 'Nhập tên bài hát hoặc video...'
+                };
+            }
+            btn.className = `flex-shrink-0 flex items-center gap-2 bg-[#1e1e1e] hover:bg-[#2a2a2a] pl-2 pr-4 py-2 rounded-full transition-all border border-gray-700/50 group h-[52px] shadow-lg cursor-pointer ${config.colorClass}`;
+            
+            btn.innerHTML = `
+                <div class="${config.bgClass} rounded-full w-8 h-8 flex items-center justify-center transition-all group-hover:scale-110">
+                    <span class="text-base">${config.icon}</span>
+                </div>
+                <span class="text-xs font-bold font-sans uppercase tracking-wider">${config.label}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            `;
+            input.placeholder = config.placeholder;
+            input.focus();
+        }
 
+        // --- LOGIC TRAINING (HUẤN LUYỆN) ---
+        function openTrainingModal() {
+            document.getElementById('tools-menu').classList.add('hidden');
+            document.getElementById('training-modal').classList.remove('hidden');
+            document.getElementById('training-modal').style.display = 'flex';
+        }
+
+        function closeTrainingModal() {
+            document.getElementById('training-modal').classList.add('hidden');
+            document.getElementById('training-modal').style.display = 'none';
+            document.getElementById('train-msg').innerText = '';
+        }
+
+        async function submitTraining() {
+            const msgEl = document.getElementById('train-msg');
+            const forbiddenNames = ['đạt', 'nhi', 'pnhi', 'admin', 'chủ', "dat"];
+            const badWords = ['ngu', 'chó', 'cút', 'đần', 'óc', 'lợn', 'heo', 'điên', 'khùng', 'fuck', 'đm', 'vcl', 'ngô'];
+            let validInputs = [];
+            let validOutputs = [];
+
+            for (let i = 1; i <= 3; i++) {
+                const inp = document.getElementById(`t-in-${i}`).value.trim();
+                const out = document.getElementById(`t-out-${i}`).value.trim();
+
+                if (inp) validInputs.push(inp);
+                if (out) validOutputs.push(out);
+            }
+            if (validInputs.length === 0 || validOutputs.length === 0) {
+                msgEl.innerText = "Cần ít nhất 1 câu hỏi và 1 câu trả lời!";
+                return;
+            }
+            for (const inputTxt of validInputs) {
+                const lowerInp = inputTxt.toLowerCase();
+                const hasName = forbiddenNames.some(n => lowerInp.includes(n));
+                const hasBad = badWords.some(w => lowerInp.includes(w));
+
+                if (hasName && hasBad) {
+                    msgEl.innerText = `⚠️ LỖI: Không được dạy AI chửi chủ nhân (trong câu "${inputTxt}")!`;
+                    return;
+                }
+            }
+            addMsg("⏳ Đang đồng bộ hóa kiến thức...", "ai");
+            let count = 0;
+
+            for (const trigger of validInputs) {
+                if (window.addToBrain) {
+                    await window.addToBrain(trigger, validOutputs); 
+                    count++;
+                }
+            }
+            closeTrainingModal();
+            setMode('chat');
+            addMsg(`🧠 Đã nạp xong! Dạy 1 hiểu ${validInputs.length}. (Đã liên kết ${validInputs.length} câu hỏi với ${validOutputs.length} câu trả lời)`, "ai");
+            for(let i=1; i<=3; i++) {
+                document.getElementById(`t-in-${i}`).value = '';
+                document.getElementById(`t-out-${i}`).value = '';
+            }
+        }
+        window.submitLoginName = () => {
+            const input = document.getElementById('login-name-input');
+            const modal = document.getElementById('login-modal');
+            const name = input.value.trim();
+
+            if (!name) {
+                alert("Chưa nhập tên mà đòi vào à?");
+                return;
+            }
+            state.userName = name;
+            state.emotionScore = 60;
+            UserMgr.saveProfile();
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }, 500);
+            addMsg(`Hệ thống xác nhận danh tính: **${name.toUpperCase()}**`, "ai");
+            speak("Chào mừng " + name + " đã quay trở lại.");
+        };
+        document.getElementById('login-name-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                window.submitLoginName();
+            }
+        });
     </script>
 </body>
 </html>
-
-
