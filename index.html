@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAT AI VIP PRO MAX </title>
+    <title>DAT AI VIP PRO MAX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -817,7 +817,10 @@
             sayHello(lastLoginTime) {
                 const now = Date.now();
                 const diff = now - lastLoginTime;
-                const name = state.userName || "Người lạ";
+                let name = state.userName;
+                if (!name || name === 'null' || name === 'undefined') {
+                    name = "Khách qua đường";
+                }
                 const isAngry = state.emotionScore < 40;
                 const isHappy = state.emotionScore > 80;
 
@@ -1299,7 +1302,7 @@
             addMsg("Chào thế giới, tao là AI VIP Pro Max đây. Chuẩn bị run rẩy đi… hẹ hẹ hẹ", "ai");
             await wait(4000);
             renderFace('NEUTRAL');
-            if (UserMgr.sayHello) {
+            if (state.userName && UserMgr.sayHello) {
                  UserMgr.sayHello(state.storedLastLogin);
             }
         }
@@ -2158,8 +2161,7 @@
                 modal.classList.add('hidden');
                 modal.style.display = 'none';
             }, 500);
-            addMsg(`Hệ thống xác nhận danh tính: **${name.toUpperCase()}**`, "ai");
-            speak("Chào mừng " + name + " đã quay trở lại.");
+            UserMgr.sayHello(0);
         };
         document.getElementById('login-name-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -2169,5 +2171,3 @@
     </script>
 </body>
 </html>
-
-
