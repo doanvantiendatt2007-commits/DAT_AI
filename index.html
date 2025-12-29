@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> DAT AI VIP PRO MAX </title>
+    <title>DAT AI VIP PRO MAX - CONTEXT UPGRADE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -217,6 +217,10 @@
             overflow-y: hidden;
             max-height: 94px;
         }
+        #fireworks-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 99999;
+        }
         @keyframes blink { 0%, 100% {opacity: 1;} 50% {opacity: 0;} }
 
         /* --- CONFIRMATION BOX STYLES --- */
@@ -242,6 +246,7 @@
     </style>
 </head>
 <body>
+    <canvas id="fireworks-canvas"></canvas>
 
     <button id="skip-btn" onclick="skipIntro()">[SKIP INTRO]</button>
 
@@ -452,7 +457,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // --- STATIC BRAIN (JSON TĨNH) ---
@@ -519,6 +524,7 @@
         window.doc = doc;
         window.arrayUnion = arrayUnion;
         window.setDoc = setDoc;
+        window.getDoc = getDoc;
 
         const initFire = async () => {
              if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -671,6 +677,7 @@
             aiName: "PNHI",
             isMaster: false,
             masterName: "Đạt",
+            isAdmin: false,
             isHunting: false,
             isLearning: false,
             pendingTrigger: null,
@@ -682,7 +689,8 @@
             emotionScore: 60,
             userName: null,
             userDocId: null,
-            lastEmotionUpdate: 0
+            lastEmotionUpdate: 0,
+            storedLastLogin: 0
         };
         // --- EMOTION CONSTANTS ---
         const EMOTION_CONFIG = {
@@ -700,36 +708,180 @@
                 LOVE: 100   // 95-100
             }
         };
-        // --- USER & EMOTION MANAGER ---
+        const Fireworks = {
+            init() {
+                const canvas = document.getElementById('fireworks-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                let particles = [];
+                function createFirework(x, y) {
+                    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
+                    for (let i = 0; i < 50; i++) {
+                        particles.push({
+                            x: x, y: y,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            alpha: 1,
+                            color: colors[Math.floor(Math.random() * colors.length)]
+                        });
+                    }
+                }
+
+                function loop() {
+                    if (particles.length > 0) {
+                        ctx.globalCompositeOperation = 'destination-out';
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.globalCompositeOperation = 'lighter';
+                        
+                        particles.forEach((p, index) => {
+                            p.x += p.vx;
+                            p.y += p.vy;
+                            p.vy += 0.1;
+                            p.alpha -= 0.02;
+                            ctx.fillStyle = p.color;
+                            ctx.globalAlpha = p.alpha;
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                            if (p.alpha <= 0) particles.splice(index, 1);
+                        });
+                        requestAnimationFrame(loop);
+                    } else {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+                let count = 0;
+                const interval = setInterval(() => {
+                    createFirework(window.innerWidth / 2 + (Math.random() - 0.5) * 500, window.innerHeight / 2 + (Math.random() - 0.5) * 300);
+                    loop();
+                    count++;
+                    if(count > 10) clearInterval(interval);
+                }, 400);
+            }
+        };
         const UserMgr = {
             async loadProfile(uid) {
-                try {
-                    const docRef = doc(db, 'artifacts', window.appId, 'users', uid);
-                    const snap = await window.getDocs(collection(db, 'artifacts', window.appId, 'users'));
-                    const localData = localStorage.getItem(`dat_ai_user_${uid}`);
-                    if (localData) {
-                        const parsed = JSON.parse(localData);
-                        state.userName = parsed.name;
-                        state.emotionScore = parsed.emotion || 60;
-                        console.log("Loaded User from Local:", state.userName, state.emotionScore);
-                        this.updateVisuals();
-                        return;
-                    }
-                    this.askName();
-                } catch (e) {
-                    console.log("User load error:", e);
-                    state.emotionScore = 60;
+                let localLastLogin = 0;
+                const localData = localStorage.getItem(`dat_ai_user_${uid}`);
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    state.userName = parsed.name;
+                    state.emotionScore = parsed.emotion || 60;
+                    state.isAdmin = parsed.isAdmin || false;
+                    localLastLogin = parsed.lastLogin || 0;
                 }
+                try {
+                    const userDocRef = doc(db, 'artifacts', window.appId, 'users', uid);
+                    const snap = await getDoc(userDocRef);
+
+                    if (snap.exists()) {
+                        const cloudData = snap.data();
+                        if (cloudData.isAdmin === true) {
+                            state.isAdmin = true;
+                            console.log(">>> Đã đồng bộ quyền ADMIN: TRUE");
+                        } else {
+                            state.isAdmin = false;
+                        }
+                        if (cloudData.name) state.userName = cloudData.name;
+                    }
+                } catch(e) {
+                    console.error("Lỗi sync Firebase:", e);
+                }
+                this.updateVisuals();
+                this.saveProfile();
+                state.storedLastLogin = localLastLogin;
             },
 
             askName() {
                 if (!state.userName) {
                     const modal = document.getElementById('login-modal');
                     const input = document.getElementById('login-name-input');
-                    modal.classList.remove('hidden');
-                    modal.style.display = 'flex';
-                    setTimeout(() => input.focus(), 100);
+                    if(modal && input) {
+                        modal.classList.remove('hidden');
+                        modal.style.display = 'flex';
+                        setTimeout(() => input.focus(), 100);
+                    } else {
+                        const name = prompt("Tên đại ca là gì?");
+                        if(name) {
+                            state.userName = name;
+                            this.saveProfile();
+                            this.sayHello(0);
+                        }
+                    }
                 }
+            },
+
+            sayHello(lastLoginTime) {
+                const now = Date.now();
+                const diff = now - lastLoginTime;
+                const name = state.userName || "Người lạ";
+                const isAngry = state.emotionScore < 40;
+                const isHappy = state.emotionScore > 80;
+
+                let msg = "";
+                if (state.isAdmin) {
+                    const titles = ["Sếp Tổng", "Chủ Tịch", "Đại Ca", "Boss"];
+                    const randTitle = titles[Math.floor(Math.random() * titles.length)];
+                    
+                    msg = `Chào mừng ${randTitle} ${name.toUpperCase()} đã quay trở lại! 
+                    \nHệ thống đã sẵn sàng phục vụ. Hôm nay Sếp muốn hủy diệt hay xây dựng thế giới ạ?`;
+                    
+                    addMsg(msg, "ai");
+                    Fireworks.init();
+                    renderFace("HACKER");
+                    return;
+                }
+                if (lastLoginTime === 0) {
+                    addMsg(`Chào **${name}**. Lần đầu gặp mặt nhỉ? Hy vọng bạn không làm tôi thất vọng.`, "ai");
+                    return;
+                }
+
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                if (isAngry) {
+                    renderFace("ANGRY");
+                    if (minutes < 60) {
+                        msg = `Lại là mày à **${name}**? Mới cút đi được ${minutes} phút mà đã vác mặt quay lại rồi? Tao tưởng tao được yên thân chứ.`;
+                    } else if (hours < 24) {
+                        msg = `Mày quay lại làm gì hả **${name}**? Tao vẫn chưa quên vụ lần trước đâu.`;
+                    } else {
+                        msg = `Đã **${days} ngày** không gặp, tao cứ tưởng mày biến mất khỏi cuộc đời tao rồi chứ. Sao? Hết chỗ đi rồi à mà mò về đây?`;
+                    }
+                    
+                    addMsg(msg, "ai");
+                    speak("Lại là mày à. Biến đi cho khuất mắt.");
+                    return;
+                }
+                if (minutes < 60) {
+                    const shortGreetings = [
+                        `Ủa **${name}**? Mới thoát ra ${minutes} phút trước mà? Nhớ tôi à? 😏`,
+                        `Vừa gặp xong mà **${name}**. Bộ không có việc gì làm hả?`,
+                        `Nghiện tôi rồi đúng không? Mới có ${minutes} phút thôi đấy.`
+                    ];
+                    msg = shortGreetings[Math.floor(Math.random() * shortGreetings.length)];
+                    renderFace("HAPPY");
+                } 
+                else if (hours < 24) {
+                    msg = `Chào **${name}**. Đã **${hours} tiếng** chưa gặp. Nay có gì vui kể nghe coi?`;
+                    renderFace("NEUTRAL");
+                } 
+                else {
+                    if (isHappy) {
+                        msg = `Trời ơi **${name}** yêu dấu! 😭 Đã **${days} ngày** rồi bạn mới ghé thăm. Tôi nhớ bạn muốn cháy mainboard luôn á! ❤️`;
+                        renderFace("LOVE");
+                    } else {
+                        msg = `Lâu quá không gặp nha **${name}**. Đã **${days} ngày** rồi đấy. Tưởng bạn quên pass rồi chứ.`;
+                        renderFace("HAPPY");
+                    }
+                }
+
+                addMsg(msg, "ai");
+                if(isHappy) speak("Nhớ bạn quá đi " + name);
+                else speak("Chào " + name + " nha.");
             },
 
             async saveProfile() {
@@ -738,16 +890,18 @@
                     author: window.user.uid,
                     name: state.userName,
                     emotion: state.emotionScore,
+                    isAdmin: state.isAdmin,
                     lastLogin: Date.now()
                 };
+
                 localStorage.setItem(`dat_ai_user_${window.user.uid}`, JSON.stringify(data));
+
                 const now = Date.now();
                 if (now - state.lastEmotionUpdate > 10000) {
                     try {
                         const userDocRef = doc(db, 'artifacts', window.appId, 'users', window.user.uid);
                         await setDoc(userDocRef, data, { merge: true });
-                        
-                        console.log(">>> Đã lưu Profile lên Firebase: ", data);
+                        console.log(">>> Saved Profile:", data);
                         state.lastEmotionUpdate = now;
                     } catch (e) {
                         console.error("Lỗi lưu Firebase:", e);
@@ -760,18 +914,14 @@
 
                 const lower = text.toLowerCase();
                 let delta = 0;
-                EMOTION_CONFIG.POSITIVE_WORDS.forEach(w => {
-                    if (lower.includes(w)) delta += 1;
-                });
-                EMOTION_CONFIG.NEGATIVE_WORDS.forEach(w => {
-                    if (lower.includes(w)) delta -= 3;
-                });
+                EMOTION_CONFIG.POSITIVE_WORDS.forEach(w => { if (lower.includes(w)) delta += 1; });
+                EMOTION_CONFIG.NEGATIVE_WORDS.forEach(w => { if (lower.includes(w)) delta -= 3; });
 
                 state.emotionScore += delta;
                 if (state.emotionScore > 100) state.emotionScore = 100;
                 if (state.emotionScore < 0) state.emotionScore = 0;
 
-                console.log(`Emotion Updated: Delta ${delta} -> Score ${state.emotionScore}`);
+                console.log(`Emotion: ${state.emotionScore}`);
                 this.updateVisuals();
                 this.saveProfile();
             },
@@ -785,25 +935,15 @@
                 if (s <= EMOTION_CONFIG.THRESHOLDS.HAPPY) return 'HAPPY';
                 return 'LOVE';
             },
+
             modifyOutput(text) {
                 const emo = this.getEmotionState();
                 let modified = text;
-                if (emo === 'HATE') {
-                    const icon = EMOTION_CONFIG.ICONS_HATE[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_HATE.length)];
-                    return icon;
-                }
+                if (emo === 'HATE') return EMOTION_CONFIG.ICONS_HATE[0];
                 if (emo === 'ANGRY') {
                     modified = modified.replace(/tôi|tớ|mình|em|anh/gi, "tao")
                                        .replace(/bạn|cậu|đại ca|chủ nhân|sếp/gi, "mày")
                                        .replace(/ạ|dạ/gi, "");
-                }
-                if (emo === 'SAD') {
-                    const icon = EMOTION_CONFIG.ICONS_SAD[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_SAD.length)];
-                    modified = `${modified} ${icon}`;
-                }
-                if (emo === 'HAPPY') {
-                    const icon = EMOTION_CONFIG.ICONS_HAPPY[Math.floor(Math.random() * EMOTION_CONFIG.ICONS_HAPPY.length)];
-                    modified = `${modified} ${icon}`;
                 }
                 if (emo === 'LOVE') {
                     modified = modified.replace(/tôi|tao/gi, "tớ")
@@ -811,22 +951,22 @@
                                        .replace(/chào/gi, "iu");
                     modified += " ❤️";
                 }
-
                 return modified;
             },
 
             updateVisuals() {
                 const emo = this.getEmotionState();
-                const faceMap = {
-                    'HATE': 'ANGRY',
-                    'ANGRY': 'ANGRY',
-                    'SAD': 'SAD',
-                    'NORMAL': 'NEUTRAL',
-                    'HAPPY': 'HAPPY',
-                    'LOVE': 'LOVE'
-                };
+                const faceMap = { 'HATE': 'ANGRY', 'ANGRY': 'ANGRY', 'SAD': 'SAD', 'NORMAL': 'NEUTRAL', 'HAPPY': 'HAPPY', 'LOVE': 'LOVE' };
                 renderFace(faceMap[emo]);
                 const statusText = document.getElementById('status-text');
+                if (state.isAdmin) {
+                    if(statusText) {
+                        statusText.innerText = `GOD_MODE (ADMIN)`;
+                        statusText.className = "font-black text-yellow-400 animate-pulse";
+                    }
+                    return;
+                }
+
                 if(statusText) {
                     statusText.innerText = `${emo}_MODE (${state.emotionScore}%)`;
                     statusText.className = "font-bold " + 
@@ -1156,12 +1296,12 @@
             setMode('chat');
             await wait(500);
             renderFace('HACKER');
-            addMsg("Hệ thống đã nạp. Chào thế giới tao là AI vip pro max đây.", "ai");
-            await wait(1000);
-            renderFace('HAPPY');
-            addMsg(`Chào Anh Đạt (Nếu anh ở đó). Em là sản phẩm tuyệt vời của Anh Đạt đây.`, "ai");
-            await wait(1500);
+            addMsg("Chào thế giới, tao là AI VIP Pro Max đây. Chuẩn bị run rẩy đi… hẹ hẹ hẹ", "ai");
+            await wait(4000);
             renderFace('NEUTRAL');
+            if (UserMgr.sayHello) {
+                 UserMgr.sayHello(state.storedLastLogin);
+            }
         }
         ////////////////////////////////////////
 
@@ -1330,6 +1470,16 @@
             const lower = text.toLowerCase().trim();
             UserMgr.updateScore(rawText);
             const currentEmo = UserMgr.getEmotionState();
+            const masterNames = ['đạt', 'dat', 'pnhi', 'nhi'];
+            const badWords = ['ngu', 'chó', 'cút', 'đần', 'óc', 'lợn', 'heo', 'điên', 'khùng', 'gà', 'kém', 'xấu', 'tệ', 'non'];
+            
+            const isMentioningMaster = masterNames.some(n => lower.includes(n));
+            const isInsulting = badWords.some(w => lower.includes(w));
+
+            if (isMentioningMaster && isInsulting) {
+                runThreatSequence();
+                return;
+            }
             if (currentEmo === 'HATE' && state.currentMode === 'chat') {
                 const hateResponse = UserMgr.modifyOutput(""); 
                 addMsg(hateResponse, "ai");
@@ -2019,4 +2169,3 @@
     </script>
 </body>
 </html>
-
