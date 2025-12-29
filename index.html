@@ -1721,7 +1721,7 @@
                 addMsg(randomResp, "ai");
                 return;
             }
-            if (maxScore >= 0.60 && maxScore <= 0.85 && bestMatch) {
+            if (maxScore >= 0.50 && maxScore <= 0.75 && bestMatch) {
                 renderFace('THINKING');
                 askConfirmation(rawText, bestMatch);
                 return;
@@ -2169,4 +2169,5 @@
     </script>
 </body>
 </html>
+
 
