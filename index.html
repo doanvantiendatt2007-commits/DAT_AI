@@ -683,10 +683,16 @@
         window.linkWithPopup = linkWithPopup;
 
         const initFire = async () => {
-             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
+            await auth.authStateReady();
+            if (!auth.currentUser) { 
+                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    console.log("Khách mới -> Tạo User ẩn danh");
+                    await signInAnonymously(auth);
+                }
             } else {
-                await signInAnonymously(auth);
+                console.log("Đã đăng nhập sẵn user:", auth.currentUser.uid);
             }
         };
 
@@ -696,7 +702,9 @@
                 console.log("LOGGED IN:", user.uid);
                 await loadAllBrains();
                 UserMgr.loadProfile(user.uid);
-                checkAnonymousStatus(user);
+                if (state.isIntroDone) {
+                    checkAnonymousStatus(user);
+                }
             }
         });
 
@@ -834,6 +842,7 @@
             aiName: "PNHI",
             isMaster: false,
             masterName: "Đạt",
+            isIntroDone: false,
             isAdmin: false,
             isHunting: false,
             isLearning: false,
@@ -1565,8 +1574,12 @@
             addMsg("Chào thế giới, tao là AI VIP Pro Max đây. Chuẩn bị run rẩy đi… hẹ hẹ hẹ", "ai");
             await wait(4000);
             renderFace('NEUTRAL');
+            state.isIntroDone = true;
             if (state.userName && UserMgr.sayHello) {
                  UserMgr.sayHello(state.storedLastLogin);
+            }
+            if (window.user) {
+                checkAnonymousStatus(window.user);
             }
         }
         ////////////////////////////////////////
