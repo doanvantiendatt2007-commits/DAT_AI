@@ -609,7 +609,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithPopup, signInWithRedirect } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
@@ -681,6 +681,7 @@
         window.GoogleAuthProvider = GoogleAuthProvider;
         window.signInWithPopup = signInWithPopup;
         window.linkWithPopup = linkWithPopup;
+        window.signInWithRedirect = signInWithRedirect;
 
         const initFire = async () => {
             await auth.authStateReady();
@@ -2543,15 +2544,17 @@
             } catch (error) {
                 console.error("Lỗi liên kết:", error);
                 if (error.code === 'auth/credential-already-in-use') {
-                    const wantSwitch = confirm("CẢNH BÁO: Email Google này đã có một tài khoản cũ (Level/Streak cũ).\n\nBạn có muốn BỎ tài khoản Khách hiện tại để ĐĂNG NHẬP vào tài khoản cũ đó không?");
+                    const wantSwitch = confirm("Email Google này đã có tài khoản cũ (Level/Streak cũ).\n\nBạn có muốn ĐĂNG NHẬP vào tài khoản đó không? (Dữ liệu Khách hiện tại sẽ bị xóa)");
                     
                     if (wantSwitch) {
-                        addMsg("Đang chuyển sang tài khoản Google cũ...", "ai");
-                        window.loginWithGoogle();
+                        addMsg("Đang chuyển hướng sang Google...", "ai");
+                        const provider = new GoogleAuthProvider();
+                        await signInWithRedirect(auth, provider);
                     } else {
-                        addMsg("Đã hủy thao tác. Bạn vẫn đang ở chế độ Khách.", "ai");
+                        addMsg("Đã hủy thao tác.", "ai");
                     }
-                }
+                } 
+                // ---------------------------------------------------
                 else {
                     addMsg("Lỗi liên kết: " + error.message, "ai");
                 }
