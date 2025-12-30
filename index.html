@@ -43,6 +43,37 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+        /* --- STREAK FIRE STYLES --- */
+        @keyframes flame-flicker {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 5px currentColor); }
+        }
+
+        @keyframes level-up-burst {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.5) rotate(10deg); filter: brightness(2) drop-shadow(0 0 10px currentColor); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        .streak-icon {
+            transition: all 0.5s ease;
+            display: inline-block;
+        }
+
+        .streak-active {
+            animation: flame-flicker 2s infinite ease-in-out;
+        }
+
+        .streak-levelup {
+            animation: level-up-burst 0.8s ease-out forwards;
+        }
+
+        .fire-white { color: #9ca3af; text-shadow: none; }
+        .fire-yellow { color: #facc15; text-shadow: 0 0 10px #facc15; }
+        .fire-red { color: #ef4444; text-shadow: 0 0 10px #ef4444; }
+        .fire-blue { color: #22d3ee; text-shadow: 0 0 10px #22d3ee; }
+        .fire-pink { color: #ec4899; text-shadow: 0 0 10px #ec4899; }
+        .fire-purple { color: #a855f7; text-shadow: 0 0 15px #a855f7; }
 
         /* --- STAGE 1: CHAOS & VOID --- */
         .ruin-layer {
@@ -264,6 +295,28 @@
 
     <button id="skip-btn" onclick="skipIntro()">[SKIP INTRO]</button>
 
+    <div id="link-alert" class="hidden fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-gray-900/95 border border-yellow-500/50 p-4 rounded-xl shadow-[0_0_20px_rgba(255,200,0,0.2)] z-[99999] backdrop-blur-md flex flex-col gap-3 font-mono transform transition-all duration-500 translate-y-full">
+        <div class="flex items-start gap-3">
+            <div class="text-2xl animate-bounce">⚠️</div>
+            <div>
+                <h3 class="text-yellow-400 font-bold text-sm uppercase tracking-wider">Cảnh báo mất dữ liệu</h3>
+                <p class="text-gray-300 text-xs mt-1 leading-relaxed">
+                    Đại ca đang dùng chế độ <b>Khách (Ẩn danh)</b>. Nếu lỡ tay xóa cache hoặc đổi máy là mất sạch Level với Streak đấy!
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex gap-2 justify-end mt-1">
+            <button onclick="skipLinkAlert()" class="px-3 py-1.5 text-[10px] text-gray-500 hover:text-white font-bold border border-transparent hover:border-gray-600 rounded transition-all">
+                ĐỂ SAU (KHÁCH)
+            </button>
+            <button onclick="linkAccountGoogle()" class="px-4 py-1.5 text-[10px] bg-yellow-600 hover:bg-yellow-500 text-black font-black uppercase rounded shadow-lg transition-all flex items-center gap-2">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-3 h-3">
+                Liên kết ngay
+            </button>
+        </div>
+    </div>
+
     <div id="ruin-screen" class="ruin-layer">
         <div id="binary-bg" class="binary-stream"></div>
         <h1 class="text-6xl font-black text-gray-800 tracking-tighter mb-4 glitch-text">NULL_POINTER</h1>
@@ -279,13 +332,21 @@
         <header class="glass-panel h-20 flex items-center justify-between px-4 z-10 border-b border-cyan-900/30">
             <div class="flex items-center gap-4">
                 <div id="ai-avatar" class="bit-face-container rounded"></div>
-                <div>
-                    <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">PNHI</h1>
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-center gap-2">
+                        <h1 id="ai-name-display" class="text-cyan-400 text-xl font-black tracking-widest">PNHI</h1>
+                        
+                        <div id="streak-container" class="hidden flex items-center gap-1 bg-gray-900/50 px-2 py-0.5 rounded-full border border-gray-800 transition-all" title="Nhắn 3 tin mỗi ngày để thắp lửa!">
+                            <span id="streak-fire" class="text-gray-400 text-sm transform transition-all">🔥</span>
+                            <span id="streak-count" class="text-xs font-bold font-mono text-gray-400">0</span>
+                        </div>
+                    </div>
+
                     <div class="text-[10px] text-gray-400 font-mono flex items-center gap-2">
                         STATUS: <span id="status-text" class="text-green-400 font-bold">CONNECTED</span>
                         <span id="brain-indicator" class="hidden text-yellow-400 text-[9px] animate-pulse">[BRAIN_SYNC]</span>
                     </div>
-                    <button onclick="toggleVoice()" id="voice-btn" class="text-[10px] border border-cyan-500/50 text-cyan-500 px-2 py-1 rounded hover:bg-cyan-900/50"> MÕM: MỞ </button>
+                    <button onclick="toggleVoice()" id="voice-btn" class="text-[10px] border border-cyan-500/50 text-cyan-500 px-2 py-1 rounded hover:bg-cyan-900/50 w-fit mt-1"> MÕM: MỞ </button>
                 </div>
             </div>
             <div class="text-right hidden sm:block">
@@ -479,6 +540,14 @@
                     class="mt-8 px-10 py-3 bg-cyan-600 hover:bg-cyan-500 text-black font-black uppercase tracking-widest rounded clip-path-polygon hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all transform hover:-translate-y-1 active:scale-95 text-sm">
                     Xác Nhận ➜
                 </button>
+                <div class="mt-4 w-full flex flex-col items-center gap-2">
+                    <div class="text-[10px] text-gray-600 font-sans">--- HOẶC ---</div>
+                    <button onclick="loginWithGoogle()" 
+                        class="group w-full max-w-[200px] flex items-center justify-center gap-3 px-4 py-2.5 bg-white text-black font-bold uppercase tracking-wider rounded border border-gray-300 hover:bg-gray-100 transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] text-xs">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4" alt="G">
+                        <span>Login Google</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -496,7 +565,6 @@
             </div>
             
             <div class="relative z-10 flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                
                 <div class="group">
                     <label class="text-[10px] text-gray-500 font-bold uppercase block mb-1">User ID (Author ID) - <span class="text-red-500">LOCKED</span></label>
                     <div class="relative">
@@ -505,20 +573,24 @@
                         <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-600">READ-ONLY</div>
                     </div>
                 </div>
-
+                <div class="group">
+                    <label class="text-[10px] text-blue-400 font-bold uppercase block mb-1">Linked Account (Google)</label>
+                    <div class="relative">
+                        <input id="profile-email-input" readonly 
+                            class="w-full bg-blue-900/10 border border-blue-900/30 text-blue-200 px-3 py-3 text-xs rounded font-mono cursor-not-allowed select-all focus:outline-none">
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-blue-500/50">VERIFIED</div>
+                    </div>
+                </div>
                 <div class="group">
                     <label class="text-[10px] text-orange-400 font-bold uppercase block mb-1">Display Name (Tên hiển thị)</label>
                     <input id="profile-name-input" type="text"
                         class="w-full bg-black/40 border border-orange-900/50 focus:border-orange-500 text-orange-100 px-3 py-3 text-sm rounded outline-none transition-all placeholder-gray-700 focus:bg-orange-900/5 focus:shadow-[0_0_15px_rgba(255,165,0,0.2)]"
                         placeholder="Nhập tên mới...">
                 </div>
-
                 <div class="text-[10px] text-gray-600 italic mt-2">
                     *Tên này sẽ được AI gọi khi giao tiếp.
                 </div>
-
             </div>
-
             <div class="relative z-10 flex justify-end gap-3 p-4 border-t border-gray-800 flex-shrink-0 bg-[#0a0a0a]">
                 <button onclick="closeProfileModal()" class="px-4 py-2 text-gray-500 hover:text-white text-xs font-bold uppercase rounded hover:bg-white/5 transition-all">
                     Đóng
@@ -537,7 +609,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, arrayUnion, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
@@ -606,6 +678,9 @@
         window.arrayUnion = arrayUnion;
         window.setDoc = setDoc;
         window.getDoc = getDoc;
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+        window.linkWithPopup = linkWithPopup;
 
         const initFire = async () => {
              if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -621,6 +696,7 @@
                 console.log("LOGGED IN:", user.uid);
                 await loadAllBrains();
                 UserMgr.loadProfile(user.uid);
+                checkAnonymousStatus(user);
             }
         });
 
@@ -771,7 +847,11 @@
             userName: null,
             userDocId: null,
             lastEmotionUpdate: 0,
-            storedLastLogin: 0
+            storedLastLogin: 0,
+            streak: 0,
+            lastStreakDate: null,
+            dailyMsgCount: 0,
+            lastMsgDate: null
         };
         // --- EMOTION CONSTANTS ---
         const EMOTION_CONFIG = {
@@ -844,36 +924,134 @@
             }
         };
         const UserMgr = {
+            getTodayStr() {
+                const d = new Date();
+                return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+            },
+            getMsgThreshold() { return 3; },
             async loadProfile(uid) {
                 let localLastLogin = 0;
                 const localData = localStorage.getItem(`dat_ai_user_${uid}`);
+                state.streak = 0;
+                state.lastStreakDate = null;
+                state.dailyMsgCount = 0;
+                state.lastMsgDate = this.getTodayStr();
                 if (localData) {
                     const parsed = JSON.parse(localData);
                     state.userName = parsed.name;
                     state.emotionScore = parsed.emotion || 60;
                     state.isAdmin = parsed.isAdmin || false;
                     localLastLogin = parsed.lastLogin || 0;
+                    state.streak = parsed.streak || 0;
+                    state.lastStreakDate = parsed.lastStreakDate || null;
+                    state.dailyMsgCount = parsed.dailyMsgCount || 0;
+                    state.lastMsgDate = parsed.lastMsgDate || this.getTodayStr();
                 }
+                const today = this.getTodayStr();
+                if (state.lastMsgDate !== today) {
+                    state.dailyMsgCount = 0;
+                    state.lastMsgDate = today;
+                }
+
+                if (state.lastStreakDate) {
+                    const lastDate = new Date(state.lastStreakDate);
+                    const currDate = new Date(today);
+                    const diffTime = Math.abs(currDate - lastDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    if (diffDays > 1) {
+                        console.log(">>> STREAK BROKEN. Reset to 0.");
+                        state.streak = 0;
+                    }
+                }
+
                 try {
                     const userDocRef = doc(db, 'artifacts', window.appId, 'users', uid);
                     const snap = await getDoc(userDocRef);
 
                     if (snap.exists()) {
                         const cloudData = snap.data();
-                        if (cloudData.isAdmin === true) {
-                            state.isAdmin = true;
-                            console.log(">>> Đã đồng bộ quyền ADMIN: TRUE");
-                        } else {
-                            state.isAdmin = false;
-                        }
+                        if (cloudData.isAdmin === true) state.isAdmin = true;
                         if (cloudData.name) state.userName = cloudData.name;
+                        if (cloudData.streak !== undefined && state.streak === 0) {
+                            state.streak = cloudData.streak;
+                            state.lastStreakDate = cloudData.lastStreakDate;
+                        }
                     }
-                } catch(e) {
-                    console.error("Lỗi sync Firebase:", e);
-                }
+                } catch(e) { console.error("Lỗi sync Firebase:", e); }
+
                 this.updateVisuals();
+                this.renderStreakUI();
                 this.saveProfile();
                 state.storedLastLogin = localLastLogin;
+            },
+
+            checkStreakProgress() {
+                if (!window.user) return;
+                
+                const today = this.getTodayStr();
+                state.dailyMsgCount++;
+                state.lastMsgDate = today;
+                if (state.lastStreakDate !== today && state.dailyMsgCount >= this.getMsgThreshold()) {
+                    
+                    const oldStreak = state.streak;
+                    state.streak++;
+                    state.lastStreakDate = today;
+                    
+                    console.log(">>> STREAK IGNITED! New Streak:", state.streak);
+                    this.triggerStreakLevelUp(oldStreak, state.streak);
+                }
+
+                this.renderStreakUI();
+                this.saveProfile();
+            },
+
+            triggerStreakLevelUp(oldVal, newVal) {
+                const fireIcon = document.getElementById('streak-fire');
+                const container = document.getElementById('streak-container');
+                fireIcon.classList.remove('streak-levelup');
+                void fireIcon.offsetWidth;
+                fireIcon.classList.add('streak-levelup');
+                let msg = "";
+                
+                // Mốc quan trọng
+                if (newVal === 3) msg = `🔥 CHÁY LÊN! Bạn đã đạt chuỗi 3 ngày! Lửa chuyển sang Vàng!`;
+                else if (newVal === 10) msg = `🔥 QUÁ DỮ! Chuỗi 10 ngày bất bại! Lửa Đỏ rực cháy!`;
+                else if (newVal === 30) msg = `🔥 THẦN THÁNH! 30 ngày liên tục! Lửa Xanh huyền thoại!`;
+                else if (newVal === 100) msg = `🔥 BẤT TỬ! 100 ngày bên nhau! Lửa Hồng tình yêu!`;
+                else if (newVal === 365) msg = `🔥 CHÚA TỂ! 1 NĂM TRÒN! Lửa Tím vương giả!`;
+                else msg = `🔥 Streak +1 (${newVal} ngày). Đã thắp lửa cho hôm nay!`;
+
+                addMsg(msg, "ai");
+            },
+
+            renderStreakUI() {
+                const container = document.getElementById('streak-container');
+                const fire = document.getElementById('streak-fire');
+                const count = document.getElementById('streak-count');
+                const today = this.getTodayStr();
+
+                if(!container) return;
+                container.classList.remove('hidden');
+                count.innerText = state.streak;
+                fire.className = "text-sm transform transition-all streak-icon font-black text-lg"; 
+                
+                let colorClass = "fire-white";
+                if (state.streak >= 3) colorClass = "fire-yellow";
+                if (state.streak >= 10) colorClass = "fire-red";
+                if (state.streak >= 30) colorClass = "fire-blue";
+                if (state.streak >= 100) colorClass = "fire-pink";
+                if (state.streak >= 365) colorClass = "fire-purple";
+
+                fire.classList.add(colorClass);
+                if (state.lastStreakDate === today) {
+                    fire.classList.add('streak-active');
+                    container.classList.add('border-cyan-500/50');
+                    container.classList.remove('border-gray-800');
+                } else {
+                    container.classList.add('border-gray-800');
+                    container.classList.remove('border-cyan-500/50');
+                    count.innerText = `${state.streak} (${state.dailyMsgCount}/3)`;
+                }
             },
 
             askName() {
@@ -919,7 +1097,7 @@
                     return;
                 }
                 if (lastLoginTime === 0) {
-                    addMsg(`Chào **${name}**. Lần đầu gặp mặt nhỉ? Hy vọng bạn không làm tôi thất vọng.`, "ai");
+                    addMsg(`Chào ${name}. Lần đầu gặp mặt nhỉ? Hy vọng bạn không làm tôi thất vọng.`, "ai");
                     return;
                 }
 
@@ -929,11 +1107,11 @@
                 if (isAngry) {
                     renderFace("ANGRY");
                     if (minutes < 60) {
-                        msg = `Lại là mày à **${name}**? Mới cút đi được ${minutes} phút mà đã vác mặt quay lại rồi? Tao tưởng tao được yên thân chứ.`;
+                        msg = `Lại là mày à ${name}? Mới cút đi được ${minutes} phút mà đã vác mặt quay lại rồi? Tao tưởng tao được yên thân chứ.`;
                     } else if (hours < 24) {
-                        msg = `Mày quay lại làm gì hả **${name}**? Tao vẫn chưa quên vụ lần trước đâu.`;
+                        msg = `Mày quay lại làm gì hả ${name}? Tao vẫn chưa quên vụ lần trước đâu.`;
                     } else {
-                        msg = `Đã **${days} ngày** không gặp, tao cứ tưởng mày biến mất khỏi cuộc đời tao rồi chứ. Sao? Hết chỗ đi rồi à mà mò về đây?`;
+                        msg = `Đã ${days} ngày không gặp, tao cứ tưởng mày biến mất khỏi cuộc đời tao rồi chứ. Sao? Hết chỗ đi rồi à mà mò về đây?`;
                     }
                     
                     addMsg(msg, "ai");
@@ -942,23 +1120,23 @@
                 }
                 if (minutes < 60) {
                     const shortGreetings = [
-                        `Ủa **${name}**? Mới thoát ra ${minutes} phút trước mà? Nhớ tôi à? 😏`,
-                        `Vừa gặp xong mà **${name}**. Bộ không có việc gì làm hả?`,
+                        `Ủa ${name}? Mới thoát ra ${minutes} phút trước mà? Nhớ tôi à? 😏`,
+                        `Vừa gặp xong mà ${name}. Bộ không có việc gì làm hả?`,
                         `Nghiện tôi rồi đúng không? Mới có ${minutes} phút thôi đấy.`
                     ];
                     msg = shortGreetings[Math.floor(Math.random() * shortGreetings.length)];
                     renderFace("HAPPY");
                 } 
                 else if (hours < 24) {
-                    msg = `Chào **${name}**. Đã **${hours} tiếng** chưa gặp. Nay có gì vui kể nghe coi?`;
+                    msg = `Chào ${name}. Đã ${hours} tiếng chưa gặp. Nay có gì vui kể nghe coi?`;
                     renderFace("NEUTRAL");
                 } 
                 else {
                     if (isHappy) {
-                        msg = `Trời ơi **${name}** yêu dấu! 😭 Đã **${days} ngày** rồi bạn mới ghé thăm. Tôi nhớ bạn muốn cháy mainboard luôn á! ❤️`;
+                        msg = `Trời ơi ${name} yêu dấu! 😭 Đã ${days} ngày rồi bạn mới ghé thăm. Tôi nhớ bạn muốn cháy mainboard luôn á! ❤️`;
                         renderFace("LOVE");
                     } else {
-                        msg = `Lâu quá không gặp nha **${name}**. Đã **${days} ngày** rồi đấy. Tưởng bạn quên pass rồi chứ.`;
+                        msg = `Lâu quá không gặp nha ${name}. Đã ${days} ngày rồi đấy. Tưởng bạn quên pass rồi chứ.`;
                         renderFace("HAPPY");
                     }
                 }
@@ -975,7 +1153,11 @@
                     name: state.userName,
                     emotion: state.emotionScore,
                     isAdmin: state.isAdmin,
-                    lastLogin: Date.now()
+                    lastLogin: Date.now(),
+                    streak: state.streak,
+                    lastStreakDate: state.lastStreakDate,
+                    dailyMsgCount: state.dailyMsgCount,
+                    lastMsgDate: state.lastMsgDate
                 };
 
                 localStorage.setItem(`dat_ai_user_${window.user.uid}`, JSON.stringify(data));
@@ -1710,7 +1892,7 @@
                     
                     if (videoIdMatch && videoIdMatch[1]) {
                         const videoId = videoIdMatch[1];
-                        addMsg(`🎬 **Hàng về!** AI đã bắt được video TikTok (ID: ${videoId})...`, "ai");
+                        addMsg(`🎬 Hàng về! AI đã bắt được video TikTok (ID: ${videoId})...`, "ai");
                         const embedHtml = `
                             <div style="margin-top: 10px; border: 1px solid #00ffff; border-radius: 8px; overflow: hidden; background: #000;">
                                 <iframe 
@@ -1740,7 +1922,7 @@
                     return;
                 }
 
-                addMsg(`OK! Đang mở YouTube: **${query}**...`, "ai");
+                addMsg(`OK! Đang mở YouTube: ${query}...`, "ai");
                 const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
         
                 const youtubeCard = `
@@ -2034,6 +2216,7 @@
                     state.isHunting = false; 
                 }
                 addMsg(rawTxt, "user"); 
+                UserMgr.checkStreakProgress();
                 els.input.value = '';
                 if (displayTxt.toLowerCase() === 'save brain' || displayTxt.toLowerCase() === 'lưu não' || displayTxt.toLowerCase() === 'tải não') {
                     if (window.saveBrainToFile) {
@@ -2230,10 +2413,22 @@
             const modal = document.getElementById('profile-modal');
             const idInput = document.getElementById('profile-id-input');
             const nameInput = document.getElementById('profile-name-input');
+            const emailInput = document.getElementById('profile-email-input');
             if (window.user) {
                 idInput.value = window.user.uid;
+                if (window.user.email) {
+                    emailInput.value = window.user.email;
+                    emailInput.classList.remove("text-gray-500");
+                    emailInput.classList.add("text-blue-200");
+                } else {
+                    emailInput.value = "Chưa liên kết Google (Ẩn danh)";
+                    emailInput.classList.add("text-gray-500");
+                    emailInput.classList.remove("text-blue-200");
+                }
+
             } else {
                 idInput.value = "GUEST_SESSION (Chưa đăng nhập)";
+                emailInput.value = "---";
             }
             
             nameInput.value = state.userName || "";
@@ -2274,6 +2469,75 @@
             }
         }
 
+
+        window.loginWithGoogle = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                state.userName = user.displayName;
+                await UserMgr.saveProfile();
+                const modal = document.getElementById('login-modal');
+                modal.style.opacity = '0';
+                modal.style.transform = 'scale(1.1)';
+                
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.style.display = 'none';
+                    addMsg(`Đã kết nối tài khoản Google: ${user.displayName}`, "ai");
+                    
+                    const loginTimeToCheck = state.storedLastLogin > 0 ? state.storedLastLogin : 0;
+                    UserMgr.sayHello(loginTimeToCheck);
+                    document.getElementById('user-input').focus();
+                }, 500);
+
+            } catch (error) {
+                console.error("Lỗi Google Login:", error);
+                alert("Lỗi đăng nhập: " + error.message);
+            }
+        };
+
+
+        function checkAnonymousStatus(user) {
+            const alertBox = document.getElementById('link-alert');
+            if (user && user.isAnonymous && !sessionStorage.getItem('skipLinkAlert')) {
+                alertBox.classList.remove('hidden');
+                setTimeout(() => {
+                    alertBox.classList.remove('translate-y-full');
+                }, 100);
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+        window.skipLinkAlert = () => {
+            const alertBox = document.getElementById('link-alert');
+            alertBox.classList.add('translate-y-full');
+            setTimeout(() => alertBox.classList.add('hidden'), 500);
+            sessionStorage.setItem('skipLinkAlert', 'true');
+        };
+        window.linkAccountGoogle = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                addMsg("Đang liên kết với Google...", "ai");
+                const result = await linkWithPopup(auth.currentUser, provider);
+                const user = result.user;
+                state.userName = user.displayName;
+                await UserMgr.saveProfile();
+
+                document.getElementById('link-alert').classList.add('hidden');
+                addMsg(`Đã liên kết thành công! Từ giờ dữ liệu của ${user.displayName} đã an toàn trên mây.`, "ai");
+                UserMgr.updateVisuals();
+
+            } catch (error) {
+                console.error("Lỗi liên kết:", error);
+                if (error.code === 'auth/credential-already-in-use') {
+                    addMsg("Lỗi: Email Google này đã được dùng cho một tài khoản khác rồi. Không thể gộp.", "ai");
+                    alert("Email này đã có tài khoản riêng. Hãy đăng xuất và đăng nhập bằng nút Google bình thường.");
+                } else {
+                    addMsg("Lỗi liên kết: " + error.message, "ai");
+                }
+            }
+        };
 
         window.submitLoginName = async () => {
             const input = document.getElementById('login-name-input');
