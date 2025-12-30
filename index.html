@@ -2531,22 +2531,28 @@
         window.linkAccountGoogle = async () => {
             try {
                 const provider = new GoogleAuthProvider();
-                addMsg("Đang liên kết với Google...", "ai");
+                addMsg("Đang thử liên kết với Google...", "ai");
                 const result = await linkWithPopup(auth.currentUser, provider);
                 const user = result.user;
                 state.userName = user.displayName;
                 await UserMgr.saveProfile();
-
                 document.getElementById('link-alert').classList.add('hidden');
-                addMsg(`Đã liên kết thành công! Từ giờ dữ liệu của ${user.displayName} đã an toàn trên mây.`, "ai");
+                addMsg(`Đã liên kết thành công! Dữ liệu hiện tại đã được lưu vào ${user.displayName}.`, "ai");
                 UserMgr.updateVisuals();
 
             } catch (error) {
                 console.error("Lỗi liên kết:", error);
                 if (error.code === 'auth/credential-already-in-use') {
-                    addMsg("Lỗi: Email Google này đã được dùng cho một tài khoản khác rồi. Không thể gộp.", "ai");
-                    alert("Email này đã có tài khoản riêng. Hãy đăng xuất và đăng nhập bằng nút Google bình thường.");
-                } else {
+                    const wantSwitch = confirm("CẢNH BÁO: Email Google này đã có một tài khoản cũ (Level/Streak cũ).\n\nBạn có muốn BỎ tài khoản Khách hiện tại để ĐĂNG NHẬP vào tài khoản cũ đó không?");
+                    
+                    if (wantSwitch) {
+                        addMsg("Đang chuyển sang tài khoản Google cũ...", "ai");
+                        window.loginWithGoogle();
+                    } else {
+                        addMsg("Đã hủy thao tác. Bạn vẫn đang ở chế độ Khách.", "ai");
+                    }
+                }
+                else {
                     addMsg("Lỗi liên kết: " + error.message, "ai");
                 }
             }
